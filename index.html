@@ -4,30 +4,29 @@
   <meta charset="utf-8" />
   <title>BPL Delivering Together Map</title>
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css" rel="stylesheet" />
-  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
   <style>
-    body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { margin: 0; padding: 0; }
     #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-    .legend, .layer-controls {
+    .controls, .legend {
+      position: absolute;
       background: white;
       padding: 10px;
-      border-radius: 4px;
+      border-radius: 5px;
+      font-family: sans-serif;
       font-size: 14px;
-      line-height: 1.5em;
-      position: absolute;
       z-index: 1;
-      max-width: 200px;
     }
-    .legend { bottom: 20px; left: 20px; }
-    .layer-controls { top: 20px; left: 20px; }
-    .legend span, .layer-controls label { display: block; margin-bottom: 5px; }
-    .legend-icon {
+    .controls { top: 10px; left: 10px; }
+    .legend { bottom: 10px; left: 10px; }
+    .legend span { display: block; margin-bottom: 5px; }
+    .legend-box {
       display: inline-block;
-      width: 15px;
-      height: 15px;
+      width: 12px;
+      height: 12px;
       margin-right: 6px;
       vertical-align: middle;
     }
@@ -39,18 +38,18 @@
 <body>
 <div id="map"></div>
 
-<div class="layer-controls">
-  <strong>Toggle Layers:</strong>
-  <label><input type="checkbox" checked data-layer="Bicycle_Parking_20250401-cn1akk" /> Bike Parking</label>
-  <label><input type="checkbox" checked data-layer="Public_Restrooms_20250405-5turqf" /> Public Restrooms</label>
-  <label><input type="checkbox" checked data-layer="bpldeliverstogether-28xcka" /> Delivering Together</label>
+<div class="controls">
+  <strong>Layers</strong><br>
+  <label><input type="checkbox" data-layer="Bicycle_Parking_20250401-cn1akk" checked /> Bike Parking</label><br>
+  <label><input type="checkbox" data-layer="Public_Restrooms_20250405-5turqf" checked /> Public Restrooms</label><br>
+  <label><input type="checkbox" data-layer="bpldeliverstogether-28xcka" checked /> Delivering Together</label>
 </div>
 
 <div class="legend">
-  <strong>Legend:</strong>
-  <span><span class="legend-icon bike"></span>Bike Parking</span>
-  <span><span class="legend-icon restroom"></span>Public Restrooms</span>
-  <span><span class="legend-icon dt"></span>Delivering Together Site</span>
+  <strong>Legend</strong>
+  <span><span class="legend-box bike"></span>Bike Parking</span>
+  <span><span class="legend-box restroom"></span>Public Restrooms</span>
+  <span><span class="legend-box dt"></span>Delivering Together Site</span>
 </div>
 
 <script>
@@ -71,11 +70,16 @@
   });
   map.addControl(geocoder, 'top-left');
 
-  // Layer toggles
-  document.querySelectorAll('.layer-controls input[type=checkbox]').forEach(checkbox => {
-    checkbox.addEventListener('change', (e) => {
-      const layer = e.target.dataset.layer;
-      map.setLayoutProperty(layer, 'visibility', e.target.checked ? 'visible' : 'none');
+  // Layer toggle
+  map.on('load', () => {
+    document.querySelectorAll('.controls input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', (e) => {
+        const layer = e.target.dataset.layer;
+        const visibility = map.getLayoutProperty(layer, 'visibility');
+        if (visibility) {
+          map.setLayoutProperty(layer, 'visibility', visibility === 'visible' ? 'none' : 'visible');
+        }
+      });
     });
   });
 
@@ -88,17 +92,15 @@
         'Bicycle_Parking_20250401-cn1akk'
       ]
     });
-    if (!features.length) return;
-    const feature = features[0];
-    const props = feature.properties;
 
-    const popupContent = Object.entries(props)
-      .map(([k, v]) => `<strong>${k}</strong>: ${v}`)
-      .join('<br>');
+    if (!features.length) return;
+
+    const props = features[0].properties;
+    const html = Object.entries(props).map(([k, v]) => `<strong>${k}</strong>: ${v}`).join('<br>');
 
     new mapboxgl.Popup()
       .setLngLat(e.lngLat)
-      .setHTML(popupContent)
+      .setHTML(html)
       .addTo(map);
   });
 
@@ -116,11 +118,12 @@
         'Bicycle_Parking_20250401-cn1akk'
       ]
     });
+
     if (features.length) {
       map.getCanvas().style.cursor = 'pointer';
       tooltip.setLngLat(e.lngLat)
-             .setHTML(`<strong>${features[0].layer.id}</strong>`)
-             .addTo(map);
+        .setHTML(`<strong>${features[0].layer.id}</strong>`)
+        .addTo(map);
     } else {
       map.getCanvas().style.cursor = '';
       tooltip.remove();
