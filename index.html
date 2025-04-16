@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>BPL Delivering Together Map</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYWFyb25pbmJyb29rbHluIiwiYSI6ImNtOGowMmZ0dzBjMDgycnB4eWdhZW9nZ2sifQ.Z70awiKsIraT8Mfh-T_iAg';
+
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/aaroninbrooklyn/cm8ynjmie006x01s43bs01wo2',
+      center: [-73.97, 40.68], // general center of Brooklyn
+      zoom: 11
+    });
+
+    // Add navigation controls (zoom buttons)
+    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    // Optional: Show popups on click for your custom layers (if properties exist)
+    map.on('click', (e) => {
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: [
+          'bpldeliverstogether-28xcka',
+          'Public_Restrooms_20250405-5turqf',
+          'Bicycle_Parking_20250401-cn1akk'
+        ]
+      });
+
+      if (!features.length) return;
+
+      const feature = features[0];
+      const props = feature.properties;
+
+      const popupContent = Object.entries(props)
+        .map(([key, val]) => `<strong>${key}</strong>: ${val}`)
+        .join('<br>');
+
+      new mapboxgl.Popup()
+        .setLngLat(e.lngLat)
+        .setHTML(popupContent)
+        .addTo(map);
+    });
+  </script>
+</body>
+</html>
