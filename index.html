@@ -4,13 +4,19 @@
   <meta charset="utf-8" />
   <title>BPL Delivering Together Map</title>
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  
+  <!-- Mapbox core CSS & JS -->
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
+
+  <!-- Mapbox Geocoder plugin -->
   <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
+
   <style>
     body { margin: 0; padding: 0; }
     #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+
     .controls, .legend {
       position: absolute;
       background: white;
@@ -20,8 +26,10 @@
       font-size: 14px;
       z-index: 1;
     }
+
     .controls { top: 10px; left: 10px; }
     .legend { bottom: 10px; left: 10px; }
+
     .legend span { display: block; margin-bottom: 5px; }
     .legend-box {
       display: inline-block;
@@ -30,6 +38,7 @@
       margin-right: 6px;
       vertical-align: middle;
     }
+
     .bike { background: #70b8ff; }
     .restroom { background: #ff3b7c; }
     .dt { background: #ff9900; }
@@ -64,14 +73,15 @@
 
   map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-  const geocoder = new MapboxGeocoder({
-    accessToken: mapboxgl.accessToken,
-    mapboxgl: mapboxgl
-  });
-  map.addControl(geocoder, 'top-left');
-
-  // Layer toggle
+  // Fix: Define MapboxGeocoder only after script loads
   map.on('load', () => {
+    const geocoder = new MapboxGeocoder({
+      accessToken: mapboxgl.accessToken,
+      mapboxgl: mapboxgl
+    });
+    map.addControl(geocoder, 'top-left');
+
+    // Checkbox controls
     document.querySelectorAll('.controls input[type="checkbox"]').forEach(cb => {
       cb.addEventListener('change', (e) => {
         const layer = e.target.dataset.layer;
