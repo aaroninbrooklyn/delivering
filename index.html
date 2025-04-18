@@ -13,6 +13,34 @@
     body { margin: 0; padding: 0; }
     #map { position: absolute; top: 0; bottom: 0; width: 100%; }
 
+    #ui-container {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 90vw;
+    }
+
+    #geocoder, #locate-btn {
+      width: 100%;
+    }
+
+    #locate-btn {
+      padding: 12px;
+      background: #ffeb3b;
+      border: 2px solid #000;
+      border-radius: 5px;
+      font-size: 15px;
+      font-weight: bold;
+      color: #000;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
     .legend {
       position: absolute;
       background: #ffeb3b;
@@ -26,6 +54,7 @@
       box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
       bottom: 10px;
       left: 10px;
+      max-width: 90vw;
     }
 
     .legend-row {
@@ -35,7 +64,7 @@
     }
 
     .legend-row img {
-      height: 22px;
+      height: 24px;
       width: auto;
       margin-right: 8px;
     }
@@ -45,38 +74,12 @@
       top: 10px;
       right: 10px;
       z-index: 1;
-      width: 250px;
-    }
-
-    #locate-container {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 2;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    #geocoder {
-      min-width: 250px;
-    }
-
-    #locate-btn {
-      padding: 10px 14px;
-      background: #ffeb3b;
-      border: 2px solid #000;
-      border-radius: 4px;
-      font-size: 14px;
-      font-weight: bold;
-      color: #000;
-      cursor: pointer;
-      box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      width: 200px;
     }
 
     .user-location-dot {
-      width: 15px;
-      height: 15px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
       background: #2196f3;
       box-shadow: 0 0 10px 3px rgba(33, 150, 243, 0.8);
@@ -94,6 +97,29 @@
       font-size: 13px;
       line-height: 1.4;
     }
+
+    @media (max-width: 600px) {
+      #instructions {
+        width: 90vw;
+        top: auto;
+        bottom: 90px;
+        right: 10px;
+      }
+
+      .legend {
+        font-size: 13px;
+        padding: 8px;
+      }
+
+      .legend-row img {
+        height: 20px;
+      }
+
+      #locate-btn {
+        font-size: 14px;
+        padding: 10px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -105,25 +131,22 @@
   </div>
 
   <!-- 📍 Location + Search -->
-  <div id="locate-container">
-    <div id="geocoder"></div>
+  <div id="ui-container">
     <button id="locate-btn">📍 Where am I?</button>
+    <div id="geocoder"></div>
   </div>
 
-  <!-- 🧭 Legend using actual SVGs from GitHub -->
+  <!-- 🧭 Legend -->
   <div class="legend">
     <strong>Legend</strong>
     <div class="legend-row">
-      <img src="https://aaroninbrooklyn.github.io/delivering/bike-parking.svg" alt="Bike Icon">
-      Bike Parking
+      <img src="https://aaroninbrooklyn.github.io/delivering/bike-parking.svg" alt="Bike Icon"> Bike Parking
     </div>
     <div class="legend-row">
-      <img src="https://aaroninbrooklyn.github.io/delivering/toilet-map.svg" alt="Toilet Icon">
-      Public Restroom
+      <img src="https://aaroninbrooklyn.github.io/delivering/toilet-map.svg" alt="Toilet Icon"> Public Restroom
     </div>
     <div class="legend-row">
-      <img src="https://aaroninbrooklyn.github.io/delivering/delivering-together.svg" alt="Delivering Together Icon">
-      Delivering Together Branch
+      <img src="https://aaroninbrooklyn.github.io/delivering/delivering-together.svg" alt="Delivering Together Icon"> Delivering Together Branch
     </div>
   </div>
 
@@ -148,7 +171,7 @@
     });
     document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
 
-    // Hover popup
+    // Hover tooltip
     const tooltip = new mapboxgl.Popup({ closeButton: false, closeOnClick: false });
     map.on('mousemove', (e) => {
       const features = map.queryRenderedFeatures(e.point, {
@@ -159,9 +182,9 @@
         let html = '';
         if (f.layer.id === 'bpldeliverstrogether-28xcka') {
           html = `<strong>${p.branch}</strong><br>${p.address}<br>${p.phone}<br><em>${p["Delivering Together"]}</em><br><br>
-          <strong>Hours:</strong><br>
-          Mon: ${p.Monday}<br>Tue: ${p.Tuesday}<br>Wed: ${p.Wednesday}<br>
-          Thu: ${p.Thursday}<br>Fri: ${p.Friday}<br>Sat: ${p.Saturday}<br>Sun: ${p.Sunday}`;
+            <strong>Hours:</strong><br>
+            Mon: ${p.Monday}<br>Tue: ${p.Tuesday}<br>Wed: ${p.Wednesday}<br>
+            Thu: ${p.Thursday}<br>Fri: ${p.Friday}<br>Sat: ${p.Saturday}<br>Sun: ${p.Sunday}`;
         } else if (f.layer.id === 'public-restrooms') {
           html = `<strong>Public Restroom</strong><br><strong>${p.facility_name}</strong><br>Open: ${p.open}`;
         } else if (f.layer.id === 'bike-parking') {
@@ -175,7 +198,7 @@
       }
     });
 
-    // Flashing blue dot for user location
+    // Flashing dot + auto and manual location
     let userMarker = null;
     function showUserLocation(pos) {
       const coords = [pos.coords.longitude, pos.coords.latitude];
@@ -189,15 +212,15 @@
     function locateUser() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(showUserLocation, () => {
-          alert("Could not access your location.");
+          alert("We couldn’t access your location.");
         });
       } else {
-        alert("Geolocation not supported by your browser.");
+        alert("Geolocation is not supported by your browser.");
       }
     }
 
     document.getElementById('locate-btn').addEventListener('click', locateUser);
-    locateUser(); // Try on load
+    window.onload = locateUser; // 🔥 Auto locate on load
   </script>
 </body>
 </html>
