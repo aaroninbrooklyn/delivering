@@ -4,12 +4,8 @@
   <meta charset="utf-8" />
   <title>BPL Delivering Together Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- Mapbox GL -->
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
-
-  <!-- Geocoder plugin -->
   <link href="https://api.tiles.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
   <script src="https://api.tiles.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
 
@@ -42,6 +38,7 @@
     .bike { background: #70b8ff; }
     .restroom { background: #ff3b7c; }
     .dt { background: #000; }
+
     .popup {
       font-family: sans-serif;
       font-size: 13px;
@@ -60,28 +57,46 @@
       position: absolute;
       bottom: 80px;
       right: 10px;
-      padding: 8px 12px;
-      background: white;
-      border: 1px solid #aaa;
+      padding: 10px 14px;
+      background: #ffeb3b;
+      border: 2px solid #000;
       border-radius: 4px;
       font-size: 14px;
+      font-weight: bold;
+      color: #000;
       cursor: pointer;
       z-index: 1;
+      box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .user-location-dot {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #2196f3;
+      box-shadow: 0 0 10px 3px rgba(33, 150, 243, 0.8);
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.5); opacity: 0.5; }
+      100% { transform: scale(1); opacity: 1; }
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
 
-  <!-- 📸 Instructions GIF -->
+  <!-- 🖼 Instructions GIF -->
   <div id="instructions">
     <img src="https://i.imgur.com/HblNw6K.gif" alt="Instructions" style="width:100%;border-radius:8px;" />
   </div>
 
-  <!-- 📍 Manual locate button -->
+  <!-- 📍 Where am I? Button -->
   <button id="locate-btn">📍 Where am I?</button>
 
-  <!-- ✅ Layer controls -->
+  <!-- Layer toggles -->
   <div class="controls">
     <strong>Layers</strong><br>
     <label><input type="checkbox" data-layer="bike-parking" checked /> Bike Parking</label><br>
@@ -89,7 +104,7 @@
     <label><input type="checkbox" data-layer="bpldeliverstrogether-28xcka" checked /> Delivering Together</label>
   </div>
 
-  <!-- ✅ Legend -->
+  <!-- Legend -->
   <div class="legend">
     <strong>Legend</strong>
     <span><span class="legend-box dt"></span>Delivering Together Branch (🚀)</span>
@@ -110,7 +125,7 @@
 
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    // 🔍 Geocoder search bar
+    // Search bar
     if (typeof MapboxGeocoder !== 'undefined') {
       const geocoder = new MapboxGeocoder({
         accessToken: mapboxgl.accessToken,
@@ -121,7 +136,6 @@
       map.addControl(geocoder, 'top-left');
     }
 
-    // ✅ Layer toggles
     const layers = ['bike-parking', 'public-restrooms', 'bpldeliverstrogether-28xcka'];
     document.querySelectorAll('.controls input[type="checkbox"]').forEach(cb => {
       cb.addEventListener('change', e => {
@@ -133,7 +147,6 @@
       });
     });
 
-    // 🧠 Hover tooltip
     const tooltip = new mapboxgl.Popup({ closeButton: false, closeOnClick: false });
     map.on('mousemove', (e) => {
       const features = map.queryRenderedFeatures(e.point, { layers });
@@ -158,29 +171,29 @@
       }
     });
 
-    // 🗺 Auto-zoom to user's location on load
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => {
-        map.flyTo({
-          center: [pos.coords.longitude, pos.coords.latitude],
-          zoom: 14
-        });
-      }, () => console.warn("Location permission denied."));
+    // Location marker
+    let userMarker = null;
+    function showUserLocation(pos) {
+      const coords = [pos.coords.longitude, pos.coords.latitude];
+      map.flyTo({ center: coords, zoom: 14 });
+      if (userMarker) userMarker.remove();
+      const el = document.createElement('div');
+      el.className = 'user-location-dot';
+      userMarker = new mapboxgl.Marker(el).setLngLat(coords).addTo(map);
     }
 
-    // 📍 Manual "Where am I?" button
-    document.getElementById('locate-btn').addEventListener('click', () => {
+    function locateUser() {
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-          map.flyTo({
-            center: [pos.coords.longitude, pos.coords.latitude],
-            zoom: 14
-          });
-        }, () => alert("Could not access your location."));
+        navigator.geolocation.getCurrentPosition(showUserLocation, () => {
+          alert("Could not access your location.");
+        });
       } else {
-        alert("Geolocation is not supported by your browser.");
+        alert("Geolocation not supported by your browser.");
       }
-    });
+    }
+
+    document.getElementById('locate-btn').addEventListener('click', locateUser);
+    locateUser(); // Auto-run on load
   </script>
 </body>
 </html>
