@@ -88,15 +88,15 @@
 <body>
   <div id="map"></div>
 
-  <!-- 🖼 Instructions GIF -->
+  <!-- 🖼️ Multilingual instructions GIF -->
   <div id="instructions">
     <img src="https://i.imgur.com/HblNw6K.gif" alt="Instructions" style="width:100%;border-radius:8px;" />
   </div>
 
-  <!-- 📍 Where am I? Button -->
+  <!-- 📍 "Where am I?" button -->
   <button id="locate-btn">📍 Where am I?</button>
 
-  <!-- Layer toggles -->
+  <!-- Layer controls -->
   <div class="controls">
     <strong>Layers</strong><br>
     <label><input type="checkbox" data-layer="bike-parking" checked /> Bike Parking</label><br>
@@ -125,7 +125,7 @@
 
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    // Search bar
+    // Geocoder search bar
     if (typeof MapboxGeocoder !== 'undefined') {
       const geocoder = new MapboxGeocoder({
         accessToken: mapboxgl.accessToken,
@@ -136,6 +136,7 @@
       map.addControl(geocoder, 'top-left');
     }
 
+    // Toggle layers
     const layers = ['bike-parking', 'public-restrooms', 'bpldeliverstrogether-28xcka'];
     document.querySelectorAll('.controls input[type="checkbox"]').forEach(cb => {
       cb.addEventListener('change', e => {
@@ -147,6 +148,7 @@
       });
     });
 
+    // Hover popup
     const tooltip = new mapboxgl.Popup({ closeButton: false, closeOnClick: false });
     map.on('mousemove', (e) => {
       const features = map.queryRenderedFeatures(e.point, { layers });
@@ -171,7 +173,7 @@
       }
     });
 
-    // Location marker
+    // Flashing blue dot for user location
     let userMarker = null;
     function showUserLocation(pos) {
       const coords = [pos.coords.longitude, pos.coords.latitude];
@@ -193,7 +195,7 @@
     }
 
     document.getElementById('locate-btn').addEventListener('click', locateUser);
-    locateUser(); // Auto-run on load
+    locateUser(); // Try on load
   </script>
 </body>
 </html>
