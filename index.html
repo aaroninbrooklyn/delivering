@@ -1,19 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>BPL Delivering Together Map</title>
-  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Mapbox core CSS -->
+  <!-- Mapbox GL JS -->
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
 
-  <!-- Mapbox Geocoder plugin CSS -->
-  <link
-    rel="stylesheet"
-    href="https://api.tiles.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css"
-    type="text/css"
-  />
+  <!-- Geocoder plugin -->
+  <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
 
   <style>
     body { margin: 0; padding: 0; }
@@ -51,8 +49,8 @@
 
   <div class="controls">
     <strong>Layers</strong><br>
-    <label><input type="checkbox" data-layer="Bicycle_Parking_20250401-cn1akk" checked /> Bike Parking</label><br>
-    <label><input type="checkbox" data-layer="Public_Restrooms_20250405-5turqf" checked /> Public Restrooms</label><br>
+    <label><input type="checkbox" data-layer="bike-parking" checked /> Bike Parking</label><br>
+    <label><input type="checkbox" data-layer="public-restrooms" checked /> Public Restrooms</label><br>
     <label><input type="checkbox" data-layer="bpldeliverstogether-28xcka" checked /> Delivering Together</label>
   </div>
 
@@ -62,12 +60,6 @@
     <span><span class="legend-box restroom"></span>Public Restrooms</span>
     <span><span class="legend-box dt"></span>Delivering Together Site</span>
   </div>
-
-  <!-- Mapbox GL JS -->
-  <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
-
-  <!-- ✅ Fixed Geocoder plugin (CDN that works with GitHub Pages) -->
-  <script src="https://api.tiles.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
 
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiYWFyb25pbmJyb29rbHluIiwiYSI6ImNtOGowMmZ0dzBjMDgycnB4eWdhZW9nZ2sifQ.Z70awiKsIraT8Mfh-T_iAg';
@@ -82,16 +74,23 @@
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
     map.on('load', () => {
-      const geocoder = new MapboxGeocoder({
-        accessToken: mapboxgl.accessToken,
-        mapboxgl: mapboxgl
-      });
-      map.addControl(geocoder, 'top-left');
+      // ✅ SAFELY CHECK if geocoder is available
+      if (typeof MapboxGeocoder !== 'undefined') {
+        const geocoder = new MapboxGeocoder({
+          accessToken: mapboxgl.accessToken,
+          mapboxgl: mapboxgl,
+          placeholder: "Search for an address",
+          marker: false
+        });
+        map.addControl(geocoder, 'top-left');
+      } else {
+        console.error('MapboxGeocoder plugin failed to load.');
+      }
 
-      // Toggle layers on/off
+      // ✅ ACTUAL layer IDs from Studio
       const layers = [
-        'Bicycle_Parking_20250401-cn1akk',
-        'Public_Restrooms_20250405-5turqf',
+        'bike-parking',
+        'public-restrooms',
         'bpldeliverstogether-28xcka'
       ];
 
@@ -101,6 +100,8 @@
           const visibility = e.target.checked ? 'visible' : 'none';
           if (map.getLayer(layerID)) {
             map.setLayoutProperty(layerID, 'visibility', visibility);
+          } else {
+            console.warn('Layer not found:', layerID);
           }
         });
       });
