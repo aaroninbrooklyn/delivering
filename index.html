@@ -11,7 +11,7 @@
   <!-- Mapbox Geocoder plugin CSS -->
   <link
     rel="stylesheet"
-    href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css"
+    href="https://api.tiles.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css"
     type="text/css"
   />
 
@@ -63,9 +63,11 @@
     <span><span class="legend-box dt"></span>Delivering Together Site</span>
   </div>
 
-  <!-- SCRIPTS GO LAST to ensure full load -->
+  <!-- Mapbox GL JS -->
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
-  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
+
+  <!-- ✅ Fixed Geocoder plugin (CDN that works with GitHub Pages) -->
+  <script src="https://api.tiles.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
 
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiYWFyb25pbmJyb29rbHluIiwiYSI6ImNtOGowMmZ0dzBjMDgycnB4eWdhZW9nZ2sifQ.Z70awiKsIraT8Mfh-T_iAg';
@@ -86,6 +88,7 @@
       });
       map.addControl(geocoder, 'top-left');
 
+      // Toggle layers on/off
       const layers = [
         'Bicycle_Parking_20250401-cn1akk',
         'Public_Restrooms_20250405-5turqf',
