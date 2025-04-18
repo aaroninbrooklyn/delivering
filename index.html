@@ -9,7 +9,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
-
   <style>
     body { margin: 0; padding: 0; }
     #map { position: absolute; top: 0; bottom: 0; width: 100%; }
@@ -124,54 +123,79 @@
   </style>
 </head>
 <body>
-  <div id="map"></div>
+<div id="map"></div>
 
-  <!-- 🖼️ Instructions -->
-  <div id="instructions">
-    <img src="https://raw.githubusercontent.com/aaroninbrooklyn/delivering/main/dtlanguage.gif" alt="Instructions" style="width:100%;border-radius:8px;" />
+<!-- 🖼️ Instructions -->
+<div id="instructions">
+  <img src="https://raw.githubusercontent.com/aaroninbrooklyn/delivering/main/dtlanguage.gif" alt="Instructions" style="width:100%;border-radius:8px;" />
+</div>
+
+<!-- 📍 Location + Search -->
+<div id="ui-container">
+  <button id="locate-btn">📍 Where am I?</button>
+  <div id="geocoder"></div>
+</div>
+
+<!-- 🧭 Legend -->
+<div class="legend">
+  <strong>Legend</strong>
+  <div class="legend-row">
+    <img src="https://aaroninbrooklyn.github.io/delivering/bike-parking.svg" alt="Bike Icon"> Bike Parking
   </div>
-
-  <!-- 📍 Location + Search -->
-  <div id="ui-container">
-    <button id="locate-btn">📍 Where am I?</button>
-    <div id="geocoder"></div>
+  <div class="legend-row">
+    <img src="https://aaroninbrooklyn.github.io/delivering/toilet-map.svg" alt="Toilet Icon"> Public Restroom
   </div>
-
-  <!-- 🧭 Legend -->
-  <div class="legend">
-    <strong>Legend</strong>
-    <div class="legend-row">
-      <img src="https://aaroninbrooklyn.github.io/delivering/bike-parking.svg" alt="Bike Icon"> Bike Parking
-    </div>
-    <div class="legend-row">
-      <img src="https://aaroninbrooklyn.github.io/delivering/toilet-map.svg" alt="Toilet Icon"> Public Restroom
-    </div>
-    <div class="legend-row">
-      <img src="https://aaroninbrooklyn.github.io/delivering/delivering-together.svg" alt="Delivering Together Icon"> Delivering Together Branch
-    </div>
+  <div class="legend-row">
+    <img src="https://aaroninbrooklyn.github.io/delivering/delivering-together.svg" alt="Delivering Together Icon"> Delivering Together Branch
   </div>
+</div>
 
-  <script>
-    mapboxgl.accessToken = 'pk.eyJ1IjoiYWFyb25pbmJyb29rbHluIiwiYSI6ImNtOGowMmZ0dzBjMDgycnB4eWdhZW9nZ2sifQ.Z70awiKsIraT8Mfh-T_iAg';
+<script>
+  mapboxgl.accessToken = 'pk.eyJ1IjoiYWFyb25pbmJyb29rbHluIiwiYSI6ImNtOGowMmZ0dzBjMDgycnB4eWdhZW9nZ2sifQ.Z70awiKsIraT8Mfh-T_iAg';
 
-    const map = new mapboxgl.Map({
-      container: 'map',
-      style: 'mapbox://styles/aaroninbrooklyn/cm8ynjmie006x01s43bs01wo2',
-      center: [-73.97, 40.68],
-      zoom: 11
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/aaroninbrooklyn/cm8ynjmie006x01s43bs01wo2',
+    center: [-73.97, 40.68],
+    zoom: 11
+  });
+
+  map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+  const geocoder = new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken,
+    mapboxgl: mapboxgl,
+    marker: false,
+    placeholder: "Search for your address"
+  });
+  document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
+
+  // Load custom icons
+  const iconSources = {
+    'bike-parking': 'https://aaroninbrooklyn.github.io/delivering/bike-parking.svg',
+    'toilet-map': 'https://aaroninbrooklyn.github.io/delivering/toilet-map.svg',
+    'delivering-together': 'https://aaroninbrooklyn.github.io/delivering/delivering-together.svg'
+  };
+
+  function loadCustomIcons(callback) {
+    const keys = Object.keys(iconSources);
+    let loaded = 0;
+    keys.forEach((key) => {
+      map.loadImage(iconSources[key], (err, image) => {
+        if (!err && image) {
+          if (!map.hasImage(key)) {
+            map.addImage(key, image);
+          }
+        }
+        loaded++;
+        if (loaded === keys.length) callback();
+      });
     });
+  }
 
-    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+  const tooltip = new mapboxgl.Popup({ closeButton: false, closeOnClick: false });
 
-    const geocoder = new MapboxGeocoder({
-      accessToken: mapboxgl.accessToken,
-      mapboxgl: mapboxgl,
-      marker: false,
-      placeholder: "Search for your address"
-    });
-    document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
-
-    const tooltip = new mapboxgl.Popup({ closeButton: false, closeOnClick: false });
+  function setupHover() {
     map.on('mousemove', (e) => {
       const features = map.queryRenderedFeatures(e.point, {
         layers: ['bike-parking', 'public-restrooms', 'bpldeliverstrogether-28xcka']
@@ -196,29 +220,33 @@
         tooltip.remove();
       }
     });
+  }
 
-    let userMarker = null;
-    function showUserLocation(pos) {
-      const coords = [pos.coords.longitude, pos.coords.latitude];
-      map.flyTo({ center: coords, zoom: 14 });
-      if (userMarker) userMarker.remove();
-      const el = document.createElement('div');
-      el.className = 'user-location-dot';
-      userMarker = new mapboxgl.Marker(el).setLngLat(coords).addTo(map);
+  let userMarker = null;
+  function showUserLocation(pos) {
+    const coords = [pos.coords.longitude, pos.coords.latitude];
+    map.flyTo({ center: coords, zoom: 14 });
+    if (userMarker) userMarker.remove();
+    const el = document.createElement('div');
+    el.className = 'user-location-dot';
+    userMarker = new mapboxgl.Marker(el).setLngLat(coords).addTo(map);
+  }
+
+  function locateUser() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(showUserLocation, () => {
+        alert("Could not access your location.");
+      });
+    } else {
+      alert("Geolocation not supported by your browser.");
     }
+  }
 
-    function locateUser() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(showUserLocation, () => {
-          alert("Could not access your location.");
-        });
-      } else {
-        alert("Geolocation not supported by your browser.");
-      }
-    }
-
-    document.getElementById('locate-btn').addEventListener('click', locateUser);
-    window.onload = locateUser;
-  </script>
+  document.getElementById('locate-btn').addEventListener('click', locateUser);
+  window.onload = () => {
+    locateUser();
+    loadCustomIcons(setupHover);
+  };
+</script>
 </body>
 </html>
