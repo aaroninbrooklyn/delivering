@@ -13,7 +13,7 @@
     body { margin: 0; padding: 0; }
     #map { position: absolute; top: 0; bottom: 0; width: 100%; }
 
-    .controls, .legend {
+    .legend {
       position: absolute;
       background: #ffeb3b;
       padding: 10px;
@@ -24,29 +24,20 @@
       z-index: 1;
       color: #000;
       box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+      bottom: 10px;
+      left: 10px;
     }
 
-    .controls { top: 10px; left: 10px; }
-    .legend { bottom: 10px; left: 10px; }
-
-    .legend span { display: block; margin-bottom: 5px; }
-    .legend-box {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      margin-right: 6px;
-      vertical-align: middle;
-      border: 1px solid #000;
+    .legend-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 6px;
     }
 
-    .bike { background: #70b8ff; }
-    .restroom { background: #ff3b7c; }
-    .dt { background: #000; }
-
-    .popup {
-      font-family: sans-serif;
-      font-size: 13px;
-      line-height: 1.4;
+    .legend-row img {
+      height: 22px;
+      width: auto;
+      margin-right: 8px;
     }
 
     #instructions {
@@ -57,10 +48,21 @@
       width: 250px;
     }
 
-    #locate-btn {
+    #locate-container {
       position: absolute;
-      bottom: 80px;
-      right: 10px;
+      top: 10px;
+      left: 10px;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    #geocoder {
+      min-width: 250px;
+    }
+
+    #locate-btn {
       padding: 10px 14px;
       background: #ffeb3b;
       border: 2px solid #000;
@@ -69,7 +71,6 @@
       font-weight: bold;
       color: #000;
       cursor: pointer;
-      z-index: 1;
       box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
 
@@ -87,6 +88,12 @@
       50% { transform: scale(1.5); opacity: 0.5; }
       100% { transform: scale(1); opacity: 1; }
     }
+
+    .popup {
+      font-family: sans-serif;
+      font-size: 13px;
+      line-height: 1.4;
+    }
   </style>
 </head>
 <body>
@@ -94,27 +101,30 @@
 
   <!-- 🖼️ Multilingual instructions GIF -->
   <div id="instructions">
-    <img src="https://raw.githubusercontent.com/aaroninbrooklyn/delivering/27114d2e70636103e68623b27c99a2f23228b7ea/dtlanguage.gif" alt="Instructions" style="width:100%;border-radius:8px;" />
+    <img src="https://raw.githubusercontent.com/aaroninbrooklyn/delivering/main/dtlanguage.gif" alt="Instructions" style="width:100%;border-radius:8px;" />
   </div>
 
-  <!-- 📍 "Where am I?" button -->
-  <button id="locate-btn">📍 Where am I?</button>
-
-  <!-- Layer controls -->
-  <div class="controls">
-    <strong>Layers</strong><br>
-    <label><input type="checkbox" data-layer="bike-parking" checked /> Bike Parking</label><br>
-    <label><input type="checkbox" data-layer="public-restrooms" checked /> Public Restrooms</label><br>
-    <label><input type="checkbox" data-layer="bpldeliverstrogether-28xcka" checked /> Delivering Together</label>
+  <!-- 📍 Location + Search -->
+  <div id="locate-container">
+    <div id="geocoder"></div>
+    <button id="locate-btn">📍 Where am I?</button>
   </div>
 
-  <!-- Updated Legend -->
+  <!-- 🧭 Legend using actual SVGs from GitHub -->
   <div class="legend">
     <strong>Legend</strong>
-    <span><span class="legend-box dt"></span>Delivering Together Branch (🟡 logo)</span>
-    <span><span class="legend-box"></span>Other BPL Branch (📍 BPL pin)</span>
-    <span><span class="legend-box restroom"></span>Public Restroom (🚻 toilet icon)</span>
-    <span><span class="legend-box bike"></span>Bike Parking (🚲 green bike)</span>
+    <div class="legend-row">
+      <img src="https://aaroninbrooklyn.github.io/delivering/bike-parking.svg" alt="Bike Icon">
+      Bike Parking
+    </div>
+    <div class="legend-row">
+      <img src="https://aaroninbrooklyn.github.io/delivering/toilet-map.svg" alt="Toilet Icon">
+      Public Restroom
+    </div>
+    <div class="legend-row">
+      <img src="https://aaroninbrooklyn.github.io/delivering/delivering-together.svg" alt="Delivering Together Icon">
+      Delivering Together Branch
+    </div>
   </div>
 
   <script>
@@ -129,43 +139,31 @@
 
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    // Geocoder search bar
-    if (typeof MapboxGeocoder !== 'undefined') {
-      const geocoder = new MapboxGeocoder({
-        accessToken: mapboxgl.accessToken,
-        mapboxgl: mapboxgl,
-        marker: false,
-        placeholder: "Search for your address"
-      });
-      map.addControl(geocoder, 'top-left');
-    }
-
-    // Toggle layers
-    const layers = ['bike-parking', 'public-restrooms', 'bpldeliverstrogether-28xcka'];
-    document.querySelectorAll('.controls input[type="checkbox"]').forEach(cb => {
-      cb.addEventListener('change', e => {
-        const layerID = e.target.dataset.layer;
-        const visibility = e.target.checked ? 'visible' : 'none';
-        if (map.getLayer(layerID)) {
-          map.setLayoutProperty(layerID, 'visibility', visibility);
-        }
-      });
+    // Geocoder
+    const geocoder = new MapboxGeocoder({
+      accessToken: mapboxgl.accessToken,
+      mapboxgl: mapboxgl,
+      marker: false,
+      placeholder: "Search for your address"
     });
+    document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
 
     // Hover popup
     const tooltip = new mapboxgl.Popup({ closeButton: false, closeOnClick: false });
     map.on('mousemove', (e) => {
-      const features = map.queryRenderedFeatures(e.point, { layers });
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ['bike-parking', 'public-restrooms', 'bpldeliverstrogether-28xcka']
+      });
       if (features.length > 0) {
         const f = features[0], p = f.properties;
         let html = '';
         if (f.layer.id === 'bpldeliverstrogether-28xcka') {
           html = `<strong>${p.branch}</strong><br>${p.address}<br>${p.phone}<br><em>${p["Delivering Together"]}</em><br><br>
-            <strong>Hours:</strong><br>
-            Mon: ${p.Monday}<br>Tue: ${p.Tuesday}<br>Wed: ${p.Wednesday}<br>
-            Thu: ${p.Thursday}<br>Fri: ${p.Friday}<br>Sat: ${p.Saturday}<br>Sun: ${p.Sunday}`;
+          <strong>Hours:</strong><br>
+          Mon: ${p.Monday}<br>Tue: ${p.Tuesday}<br>Wed: ${p.Wednesday}<br>
+          Thu: ${p.Thursday}<br>Fri: ${p.Friday}<br>Sat: ${p.Saturday}<br>Sun: ${p.Sunday}`;
         } else if (f.layer.id === 'public-restrooms') {
-          html = `<strong>${p.facility_name}</strong><br>Open: ${p.open}`;
+          html = `<strong>Public Restroom</strong><br><strong>${p.facility_name}</strong><br>Open: ${p.open}`;
         } else if (f.layer.id === 'bike-parking') {
           html = `<strong>Bike Rack</strong><br>${p.IFOAddress}<br>Type: ${p.RackType}<br>Program: ${p.Program}`;
         }
