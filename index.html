@@ -15,9 +15,31 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
 
   <style>
-    body { margin: 0; padding: 0; font-family: sans-serif; }
-    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: sans-serif;
+    }
+    #map {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+      z-index: 0;
+    }
+    #instructions {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 220px;
+      z-index: 10;
+    }
+    #instructions img {
+      width: 100%;
+      border-radius: 6px;
+      max-width: 90vw;
+    }
     #ui-container {
       position: absolute;
       top: 10px;
@@ -25,10 +47,9 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      z-index: 2;
+      z-index: 10;
       max-width: 90vw;
     }
-
     #locate-btn {
       padding: 12px;
       background: #ffeb3b;
@@ -40,7 +61,6 @@
       text-align: center;
       box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
-
     .legend {
       position: absolute;
       bottom: 10px;
@@ -52,28 +72,17 @@
       padding: 10px;
       font-size: 14px;
       box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-      z-index: 1;
+      z-index: 5;
     }
-
     .legend-row {
       display: flex;
       align-items: center;
       margin-bottom: 6px;
     }
-
     .legend-row img {
       height: 22px;
       margin-right: 8px;
     }
-
-    #instructions {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 220px;
-      z-index: 2;
-    }
-
     .user-location-dot {
       width: 16px;
       height: 16px;
@@ -82,36 +91,22 @@
       box-shadow: 0 0 10px 3px rgba(33, 150, 243, 0.8);
       animation: pulse 1s infinite;
     }
-
     @keyframes pulse {
       0% { transform: scale(1); opacity: 1; }
       50% { transform: scale(1.4); opacity: 0.5; }
       100% { transform: scale(1); opacity: 1; }
     }
-
-    @media (max-width: 600px) {
-      #instructions { width: 90vw; top: auto; bottom: 100px; }
-      .legend { font-size: 13px; padding: 8px; }
-      .legend-row img { height: 20px; }
-      #locate-btn { font-size: 14px; padding: 10px; }
-    }
   </style>
 </head>
 <body>
 <div id="map"></div>
-
-<!-- Instructions GIF -->
 <div id="instructions">
-  <img src="https://raw.githubusercontent.com/aaroninbrooklyn/delivering/main/dtlanguage.gif" style="width:100%; border-radius: 6px;" alt="Instructions">
+  <img src="https://raw.githubusercontent.com/aaroninbrooklyn/delivering/main/dtlanguage.gif" alt="Instructions" />
 </div>
-
-<!-- UI Controls -->
 <div id="ui-container">
   <button id="locate-btn">📍 Where am I?</button>
   <div id="geocoder"></div>
 </div>
-
-<!-- Legend -->
 <div class="legend">
   <strong>Legend</strong>
   <div class="legend-row">
@@ -124,97 +119,5 @@
     <img src="https://aaroninbrooklyn.github.io/delivering/delivering-together.svg" alt="DT Branch"> Delivering Together Branch
   </div>
 </div>
-
-<script>
-mapboxgl.accessToken = 'pk.eyJ1IjoiYWFyb25pbmJyb29rbHluIiwiYSI6ImNtOGowMmZ0dzBjMDgycnB4eWdhZW9nZ2sifQ.Z70awiKsIraT8Mfh-T_iAg';
-
-const map = new mapboxgl.Map({
-  container: 'map',
-  style: 'mapbox://styles/aaroninbrooklyn/cm8ynjmie006x01s43bs01wo2',
-  center: [-73.97, 40.68],
-  zoom: 11
-});
-
-map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-// Address Search
-const geocoder = new MapboxGeocoder({
-  accessToken: mapboxgl.accessToken,
-  mapboxgl: mapboxgl,
-  marker: false,
-  placeholder: "Search your address"
-});
-document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
-
-// Load Custom Icons
-const iconList = {
-  'bike-parking': 'https://aaroninbrooklyn.github.io/delivering/bike-parking.svg',
-  'toilet-map': 'https://aaroninbrooklyn.github.io/delivering/toilet-map.svg',
-  'delivering-together': 'https://aaroninbrooklyn.github.io/delivering/delivering-together.svg'
-};
-
-function loadIcons(callback) {
-  const keys = Object.keys(iconList);
-  let loaded = 0;
-  keys.forEach(name => {
-    map.loadImage(iconList[name], (err, img) => {
-      if (!err && img && !map.hasImage(name)) map.addImage(name, img);
-      loaded++;
-      if (loaded === keys.length) callback();
-    });
-  });
-}
-
-// User Geolocation
-let userMarker = null;
-function showUserLocation(pos) {
-  const lngLat = [pos.coords.longitude, pos.coords.latitude];
-  map.flyTo({ center: lngLat, zoom: 14 });
-  if (userMarker) userMarker.remove();
-  const el = document.createElement('div');
-  el.className = 'user-location-dot';
-  userMarker = new mapboxgl.Marker(el).setLngLat(lngLat).addTo(map);
-}
-function locateUser() {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(showUserLocation, () => alert('Unable to access location.'));
-  }
-}
-document.getElementById('locate-btn').addEventListener('click', locateUser);
-
-// Hover Popups
-const tooltip = new mapboxgl.Popup({ closeButton: false, closeOnClick: false });
-
-function enableHover() {
-  map.on('mousemove', (e) => {
-    const features = map.queryRenderedFeatures(e.point, {
-      layers: ['bike-parking', 'public-restrooms', 'bpldeliverstrogether-28xcka']
-    });
-    if (features.length > 0) {
-      const f = features[0], p = f.properties;
-      let html = '';
-      if (f.layer.id === 'bpldeliverstrogether-28xcka') {
-        html = `<strong>${p.branch}</strong><br>${p.address}<br>${p.phone}<br><em>${p["Delivering Together"]}</em><br><strong>Hours:</strong><br>
-        Mon: ${p.Monday}<br>Tue: ${p.Tuesday}<br>Wed: ${p.Wednesday}<br>Thu: ${p.Thursday}<br>Fri: ${p.Friday}<br>Sat: ${p.Saturday}<br>Sun: ${p.Sunday}`;
-      } else if (f.layer.id === 'public-restrooms') {
-        html = `<strong>Public Restroom</strong><br>${p.facility_name}<br>Open: ${p.open}`;
-      } else if (f.layer.id === 'bike-parking') {
-        html = `<strong>Bike Rack</strong><br>${p.IFOAddress}<br>Type: ${p.RackType}<br>Program: ${p.Program}`;
-      }
-      tooltip.setLngLat(e.lngLat).setHTML(html).addTo(map);
-      map.getCanvas().style.cursor = 'pointer';
-    } else {
-      tooltip.remove();
-      map.getCanvas().style.cursor = '';
-    }
-  });
-}
-
-// Init
-map.on('load', () => {
-  loadIcons(enableHover);
-  locateUser(); // auto-locate on page load
-});
-</script>
 </body>
 </html>
