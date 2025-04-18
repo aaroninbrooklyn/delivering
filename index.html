@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Minimal Map Test</title>
+  <title>BPL Delivering Together Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- 1) Core Mapbox GL JS -->
+  <!-- 1. Mapbox GL JS core -->
   <link
     href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css"
     rel="stylesheet"
   />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
 
-  <!-- 2) Geocoder plugin -->
+  <!-- 2. Mapbox Geocoder plugin (MUST come AFTER mapbox-gl.js) -->
   <link
     href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css"
     rel="stylesheet"
@@ -20,29 +20,174 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
 
   <style>
-    body,html { margin:0; padding:0; height:100%; }
-    #map { width:100%; height:100%; }
+    html, body { margin:0; padding:0; height:100%; font-family:sans-serif; }
+    #map { position:fixed; top:0; bottom:0; width:100%; z-index:0; }
+    #instructions {
+      position:absolute; top:10px; right:10px; width:220px; max-width:90vw; z-index:10;
+    }
+    #instructions img { width:100%; border-radius:6px; }
+    #ui-container {
+      position:absolute; top:10px; left:10px; display:flex; flex-direction:column;
+      gap:10px; z-index:10; max-width:90vw;
+    }
+    #locate-btn {
+      padding:12px; background:#ffeb3b; border:2px solid #000; border-radius:5px;
+      font-size:16px; font-weight:bold; text-align:center; cursor:pointer;
+      box-shadow:2px 2px 4px rgba(0,0,0,0.3);
+    }
+    .legend {
+      position:absolute; bottom:10px; left:10px; background:#ffeb3b; color:#000;
+      padding:10px; border:2px solid #000; border-radius:5px; font-size:14px;
+      box-shadow:2px 2px 4px rgba(0,0,0,0.2); z-index:5;
+    }
+    .legend-row { display:flex; align-items:center; margin-bottom:6px; }
+    .legend-row img { height:22px; margin-right:8px; }
+    @media (max-width:600px) {
+      #instructions { bottom:100px; top:auto; width:90vw; }
+      .legend { font-size:13px; padding:8px }
+      .legend-row img { height:20px }
+      #locate-btn { font-size:14px; padding:10px }
+    }
   </style>
 </head>
 <body>
+  <!-- Map -->
   <div id="map"></div>
+
+  <!-- Instructions GIF -->
+  <div id="instructions">
+    <img src="https://raw.githubusercontent.com/aaroninbrooklyn/delivering/main/dtlanguage.gif" alt="Instructions" />
+  </div>
+
+  <!-- Controls -->
+  <div id="ui-container">
+    <button id="locate-btn">📍 Where am I?</button>
+    <div id="geocoder"></div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <strong>Legend</strong>
+    <div class="legend-row">
+      <img src="https://aaroninbrooklyn.github.io/delivering/bike-parking.svg" alt="Bike Parking"> Bike Parking
+    </div>
+    <div class="legend-row">
+      <img src="https://aaroninbrooklyn.github.io/delivering/toilet-map.svg" alt="Public Restroom"> Public Restroom
+    </div>
+    <div class="legend-row">
+      <img src="https://aaroninbrooklyn.github.io/delivering/delivering-together.svg" alt="Delivering Together Branch"> Delivering Together Branch
+    </div>
+  </div>
+
   <script>
+    // 1) Initialize map
     mapboxgl.accessToken = 'pk.eyJ1IjoiYWFyb25pbmJyb29rbHluIiwiYSI6ImNtOGowMmZ0dzBjMDgycnB4eWdhZW9nZ2sifQ.Z70awiKsIraT8Mfh-T_iAg';
     const map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/aaroninbrooklyn/cm8ynjmie006x01s43bs01wo2',
-      center: [-73.97,40.68],
+      center: [-73.97, 40.68],
       zoom: 11
     });
-    map.addControl(new mapboxgl.NavigationControl());
+    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    // verify geocoder loads
+    // 2) Add address search control
     const geocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
       mapboxgl: mapboxgl,
-      marker: false
+      marker: false,
+      placeholder: "Search your address"
     });
     map.addControl(geocoder);
+
+    // 3) Dynamically load your three custom icons
+    const icons = {
+      'bike-parking':   'https://aaroninbrooklyn.github.io/delivering/bike-parking.svg',
+      'toilet-map':     'https://aaroninbrooklyn.github.io/delivering/toilet-map.svg',
+      'delivering-together': 'https://aaroninbrooklyn.github.io/delivering/delivering-together.svg'
+    };
+    function loadIcons(done) {
+      const keys = Object.keys(icons);
+      let loaded = 0;
+      keys.forEach(name => {
+        map.loadImage(icons[name], (err, img) => {
+          if (!err && img && !map.hasImage(name)) {
+            map.addImage(name, img);
+          }
+          if (++loaded === keys.length) done();
+        });
+      });
+    }
+
+    // 4) Override every layer’s icon-image to use your loaded images (no sprite)
+    function overrideIcons() {
+      map.setLayoutProperty('bike-parking',   'icon-image', 'bike-parking');
+      map.setLayoutProperty('public-restrooms','icon-image', 'toilet-map');
+      map.setLayoutProperty('bpldeliverstrogether-28xcka',
+        'icon-image',
+        [
+          "match",
+          ["get", "Delivering Together"],
+          "Delivering Together", "delivering-together",
+          "BPL Branch",           "bklyn-logo",
+          /* fallback */         "star"
+        ]
+      );
+    }
+
+    // 5) Setup hover‐to‐popup
+    const popup = new mapboxgl.Popup({ closeButton:false, closeOnClick:false });
+    function enableHover() {
+      map.on('mousemove', e => {
+        const feats = map.queryRenderedFeatures(e.point, {
+          layers: ['bike-parking','public-restrooms','bpldeliverstrogether-28xcka']
+        });
+        if (feats.length) {
+          const f=feats[0], p=f.properties;
+          let html;
+          if (f.layer.id==='bpldeliverstrogether-28xcka') {
+            html = `<strong>${p.branch}</strong><br>${p.address}<br>${p.phone}
+                    <br><em>${p["Delivering Together"]}</em>
+                    <br><strong>Hours:</strong>
+                    <br>Mon: ${p.Monday}<br>Tue: ${p.Tuesday}
+                    <br>Wed: ${p.Wednesday}<br>Thu: ${p.Thursday}
+                    <br>Fri: ${p.Friday}<br>Sat: ${p.Saturday}
+                    <br>Sun: ${p.Sunday}`;
+          } else if (f.layer.id==='public-restrooms') {
+            html = `<strong>Public Restroom</strong><br>${p.facility_name}<br>Open: ${p.open}`;
+          } else {
+            html = `<strong>Bike Rack</strong><br>${p.IFOAddress}<br>Type: ${p.RackType}<br>Program: ${p.Program}`;
+          }
+          popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+          map.getCanvas().style.cursor='pointer';
+        } else {
+          popup.remove();
+          map.getCanvas().style.cursor='';
+        }
+      });
+    }
+
+    // 6) “Where am I?” and auto‑locate
+    let userMarker;
+    function locateUser() {
+      if (!navigator.geolocation) return alert('Geolocation not supported');
+      navigator.geolocation.getCurrentPosition(pos => {
+        const coords = [pos.coords.longitude,pos.coords.latitude];
+        map.flyTo({ center: coords, zoom: 14 });
+        userMarker && userMarker.remove();
+        userMarker = new mapboxgl.Marker({ color:'blue' })
+          .setLngLat(coords).addTo(map);
+      }, () => alert('Location access denied'));
+    }
+    document.getElementById('locate-btn').onclick = locateUser;
+
+    // 7) On map load: run icon‐loading, overrides, hover, and auto‑locate
+    map.on('load', () => {
+      loadIcons(() => {
+        overrideIcons();
+        enableHover();
+      });
+      locateUser();
+    });
   </script>
 </body>
 </html>
