@@ -5,13 +5,13 @@
   <title>BPL Delivering Together Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Mapbox CSS & JS -->
+  <!-- Mapbox GL JS -->
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
 
-  <!-- Mapbox Geocoder plugin -->
-  <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
-  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
+  <!-- ✅ Geocoder plugin using correct CDN for GitHub Pages -->
+  <link href="https://api.tiles.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
+  <script src="https://api.tiles.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
 
   <style>
     body { margin: 0; padding: 0; }
@@ -80,16 +80,16 @@
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
     map.on('load', () => {
-      // Geocoder
+      // ✅ Add search control
       const geocoder = new MapboxGeocoder({
         accessToken: mapboxgl.accessToken,
         mapboxgl: mapboxgl,
-        placeholder: "Search for an address",
-        marker: false
+        marker: false,
+        placeholder: "Search an address"
       });
       map.addControl(geocoder, 'top-left');
 
-      // Toggle layers
+      // ✅ Layer toggles
       const layers = [
         'bike-parking',
         'public-restrooms',
@@ -106,7 +106,7 @@
         });
       });
 
-      // Hover tooltip for BPL branches
+      // ✅ Hover tooltip
       const tooltip = new mapboxgl.Popup({
         closeButton: false,
         closeOnClick: false
@@ -119,7 +119,6 @@
 
         if (features.length > 0) {
           const f = features[0].properties;
-
           const hours = `
             <strong>Hours:</strong><br>
             Mon: ${f.Monday}<br>
@@ -130,7 +129,6 @@
             Sat: ${f.Saturday}<br>
             Sun: ${f.Sunday}
           `;
-
           const content = `
             <div class="popup">
               <strong>${f.branch}</strong><br>
