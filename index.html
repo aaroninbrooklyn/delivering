@@ -9,6 +9,7 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
+
   <style>
     body { margin: 0; padding: 0; }
     #map { position: absolute; top: 0; bottom: 0; width: 100%; }
@@ -170,22 +171,19 @@
   });
   document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
 
-  // Load custom icons
-  const iconSources = {
+  const customIcons = {
     'bike-parking': 'https://aaroninbrooklyn.github.io/delivering/bike-parking.svg',
     'toilet-map': 'https://aaroninbrooklyn.github.io/delivering/toilet-map.svg',
     'delivering-together': 'https://aaroninbrooklyn.github.io/delivering/delivering-together.svg'
   };
 
-  function loadCustomIcons(callback) {
-    const keys = Object.keys(iconSources);
+  function loadIcons(callback) {
+    const keys = Object.keys(customIcons);
     let loaded = 0;
-    keys.forEach((key) => {
-      map.loadImage(iconSources[key], (err, image) => {
-        if (!err && image) {
-          if (!map.hasImage(key)) {
-            map.addImage(key, image);
-          }
+    keys.forEach(key => {
+      map.loadImage(customIcons[key], (err, image) => {
+        if (!err && image && !map.hasImage(key)) {
+          map.addImage(key, image);
         }
         loaded++;
         if (loaded === keys.length) callback();
@@ -245,7 +243,7 @@
   document.getElementById('locate-btn').addEventListener('click', locateUser);
   window.onload = () => {
     locateUser();
-    loadCustomIcons(setupHover);
+    loadIcons(setupHover);
   };
 </script>
 </body>
