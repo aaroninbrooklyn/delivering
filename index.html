@@ -9,7 +9,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
 
-  <!-- ✅ Geocoder plugin using correct CDN for GitHub Pages -->
+  <!-- Geocoder plugin with GitHub-safe CDN -->
   <link href="https://api.tiles.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
   <script src="https://api.tiles.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
 
@@ -80,16 +80,20 @@
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
     map.on('load', () => {
-      // ✅ Add search control
-      const geocoder = new MapboxGeocoder({
-        accessToken: mapboxgl.accessToken,
-        mapboxgl: mapboxgl,
-        marker: false,
-        placeholder: "Search an address"
-      });
-      map.addControl(geocoder, 'top-left');
+      // ✅ Geocoder safely added
+      if (typeof MapboxGeocoder !== 'undefined') {
+        const geocoder = new MapboxGeocoder({
+          accessToken: mapboxgl.accessToken,
+          mapboxgl: mapboxgl,
+          marker: false,
+          placeholder: "Search an address"
+        });
+        map.addControl(geocoder, 'top-left');
+      } else {
+        console.warn("Geocoder plugin not loaded.");
+      }
 
-      // ✅ Layer toggles
+      // ✅ Toggle layer visibility
       const layers = [
         'bike-parking',
         'public-restrooms',
