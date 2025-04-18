@@ -9,7 +9,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
 
-  <!-- Geocoder plugin -->
+  <!-- Mapbox Geocoder plugin -->
   <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
 
@@ -74,20 +74,16 @@
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
     map.on('load', () => {
-      // ✅ SAFELY CHECK if geocoder is available
       if (typeof MapboxGeocoder !== 'undefined') {
         const geocoder = new MapboxGeocoder({
           accessToken: mapboxgl.accessToken,
           mapboxgl: mapboxgl,
-          placeholder: "Search for an address",
-          marker: false
+          marker: false,
+          placeholder: "Search for an address"
         });
         map.addControl(geocoder, 'top-left');
-      } else {
-        console.error('MapboxGeocoder plugin failed to load.');
       }
 
-      // ✅ ACTUAL layer IDs from Studio
       const layers = [
         'bike-parking',
         'public-restrooms',
@@ -95,7 +91,7 @@
       ];
 
       document.querySelectorAll('.controls input[type="checkbox"]').forEach(cb => {
-        cb.addEventListener('change', e => {
+        cb.addEventListener('change', (e) => {
           const layerID = e.target.dataset.layer;
           const visibility = e.target.checked ? 'visible' : 'none';
           if (map.getLayer(layerID)) {
