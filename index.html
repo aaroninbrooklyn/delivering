@@ -1,66 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>BPL Delivering Together Map</title>
-  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-  
-  <!-- Mapbox core CSS & JS -->
-  <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css" rel="stylesheet" />
-  <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
-
-  <!-- Mapbox Geocoder plugin -->
-  <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
-  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
-
-  <style>
-    body { margin: 0; padding: 0; }
-    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-
-    .controls, .legend {
-      position: absolute;
-      background: white;
-      padding: 10px;
-      border-radius: 5px;
-      font-family: sans-serif;
-      font-size: 14px;
-      z-index: 1;
-    }
-
-    .controls { top: 10px; left: 10px; }
-    .legend { bottom: 10px; left: 10px; }
-
-    .legend span { display: block; margin-bottom: 5px; }
-    .legend-box {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      margin-right: 6px;
-      vertical-align: middle;
-    }
-
-    .bike { background: #70b8ff; }
-    .restroom { background: #ff3b7c; }
-    .dt { background: #ff9900; }
-  </style>
-</head>
-<body>
-<div id="map"></div>
-
-<div class="controls">
-  <strong>Layers</strong><br>
-  <label><input type="checkbox" data-layer="Bicycle_Parking_20250401-cn1akk" checked /> Bike Parking</label><br>
-  <label><input type="checkbox" data-layer="Public_Restrooms_20250405-5turqf" checked /> Public Restrooms</label><br>
-  <label><input type="checkbox" data-layer="bpldeliverstogether-28xcka" checked /> Delivering Together</label>
-</div>
-
-<div class="legend">
-  <strong>Legend</strong>
-  <span><span class="legend-box bike"></span>Bike Parking</span>
-  <span><span class="legend-box restroom"></span>Public Restrooms</span>
-  <span><span class="legend-box dt"></span>Delivering Together Site</span>
-</div>
-
 <script>
   mapboxgl.accessToken = 'pk.eyJ1IjoiYWFyb25pbmJyb29rbHluIiwiYSI6ImNtOGowMmZ0dzBjMDgycnB4eWdhZW9nZ2sifQ.Z70awiKsIraT8Mfh-T_iAg';
 
@@ -73,7 +10,6 @@
 
   map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-  // Fix: Define MapboxGeocoder only after script loads
   map.on('load', () => {
     const geocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
@@ -81,64 +17,77 @@
     });
     map.addControl(geocoder, 'top-left');
 
-    // Checkbox controls
+    // Grab all layers
+    const allLayers = map.getStyle().layers;
+
+    // Track source-layer matches
+    const layerMap = {
+      'bpldeliverstogether-28xcka': [],
+      'Public_Restrooms_20250405-5turqf': [],
+      'Bicycle_Parking_20250401-cn1akk': []
+    };
+
+    allLayers.forEach(layer => {
+      const src = map.getLayer(layer.id)?.source;
+      if (layerMap[src]) {
+        layerMap[src].push(layer.id);
+      }
+    });
+
+    // Checkbox handler
     document.querySelectorAll('.controls input[type="checkbox"]').forEach(cb => {
       cb.addEventListener('change', (e) => {
-        const layer = e.target.dataset.layer;
-        const visibility = map.getLayoutProperty(layer, 'visibility');
-        if (visibility) {
-          map.setLayoutProperty(layer, 'visibility', visibility === 'visible' ? 'none' : 'visible');
+        const source = e.target.dataset.layer;
+        const visible = e.target.checked ? 'visible' : 'none';
+        if (layerMap[source]) {
+          layerMap[source].forEach(layerID => {
+            try {
+              if (map.getLayer(layerID) && map.getLayoutProperty(layerID, 'visibility') !== undefined) {
+                map.setLayoutProperty(layerID, 'visibility', visible);
+              } else {
+                map.setPaintProperty(layerID, 'circle-opacity', visible === 'visible' ? 1 : 0);
+              }
+            } catch (err) {
+              console.warn(`Couldn't toggle layer ${layerID}`, err);
+            }
+          });
         }
       });
     });
-  });
 
-  // Popup on click
-  map.on('click', (e) => {
-    const features = map.queryRenderedFeatures(e.point, {
-      layers: [
-        'bpldeliverstogether-28xcka',
-        'Public_Restrooms_20250405-5turqf',
-        'Bicycle_Parking_20250401-cn1akk'
-      ]
-    });
+    // Popups on click
+    map.on('click', (e) => {
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: Object.values(layerMap).flat()
+      });
 
-    if (!features.length) return;
+      if (!features.length) return;
 
-    const props = features[0].properties;
-    const html = Object.entries(props).map(([k, v]) => `<strong>${k}</strong>: ${v}`).join('<br>');
+      const props = features[0].properties;
+      const html = Object.entries(props).map(([k, v]) => `<strong>${k}</strong>: ${v}`).join('<br>');
 
-    new mapboxgl.Popup()
-      .setLngLat(e.lngLat)
-      .setHTML(html)
-      .addTo(map);
-  });
-
-  // Tooltip on hover
-  const tooltip = new mapboxgl.Popup({
-    closeButton: false,
-    closeOnClick: false
-  });
-
-  map.on('mousemove', (e) => {
-    const features = map.queryRenderedFeatures(e.point, {
-      layers: [
-        'bpldeliverstogether-28xcka',
-        'Public_Restrooms_20250405-5turqf',
-        'Bicycle_Parking_20250401-cn1akk'
-      ]
-    });
-
-    if (features.length) {
-      map.getCanvas().style.cursor = 'pointer';
-      tooltip.setLngLat(e.lngLat)
-        .setHTML(`<strong>${features[0].layer.id}</strong>`)
+      new mapboxgl.Popup()
+        .setLngLat(e.lngLat)
+        .setHTML(html)
         .addTo(map);
-    } else {
-      map.getCanvas().style.cursor = '';
-      tooltip.remove();
-    }
+    });
+
+    // Tooltip on hover
+    const tooltip = new mapboxgl.Popup({ closeButton: false, closeOnClick: false });
+    map.on('mousemove', (e) => {
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: Object.values(layerMap).flat()
+      });
+
+      if (features.length) {
+        map.getCanvas().style.cursor = 'pointer';
+        tooltip.setLngLat(e.lngLat)
+          .setHTML(`<strong>${features[0].layer.id}</strong>`)
+          .addTo(map);
+      } else {
+        map.getCanvas().style.cursor = '';
+        tooltip.remove();
+      }
+    });
   });
 </script>
-</body>
-</html>
