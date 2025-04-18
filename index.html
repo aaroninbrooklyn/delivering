@@ -56,7 +56,7 @@
     <strong>Layers</strong><br>
     <label><input type="checkbox" data-layer="bike-parking" checked /> Bike Parking</label><br>
     <label><input type="checkbox" data-layer="public-restrooms" checked /> Public Restrooms</label><br>
-    <label><input type="checkbox" data-layer="bpldeliverstogether-28xcka" checked /> Delivering Together / BPL Branches</label>
+    <label><input type="checkbox" data-layer="bpldeliverstrogether-28xcka" checked /> Delivering Together / BPL Branches</label>
   </div>
 
   <div class="legend">
@@ -93,7 +93,7 @@
       const layers = [
         'bike-parking',
         'public-restrooms',
-        'bpldeliverstogether-28xcka'
+        'bpldeliverstrogether-28xcka'
       ];
 
       document.querySelectorAll('.controls input[type="checkbox"]').forEach(cb => {
@@ -114,7 +114,7 @@
 
       map.on('mousemove', (e) => {
         const features = map.queryRenderedFeatures(e.point, {
-          layers: ['bpldeliverstogether-28xcka']
+          layers: ['bpldeliverstrogether-28xcka']
         });
 
         if (features.length > 0) {
