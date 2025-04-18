@@ -1,93 +1,52 @@
-<script>
-  mapboxgl.accessToken = 'pk.eyJ1IjoiYWFyb25pbmJyb29rbHluIiwiYSI6ImNtOGowMmZ0dzBjMDgycnB4eWdhZW9nZ2sifQ.Z70awiKsIraT8Mfh-T_iAg';
+<head>
+  <meta charset="utf-8" />
+  <title>BPL Delivering Together Map</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  
+  <!-- Mapbox core CSS -->
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css" rel="stylesheet" />
 
-  const map = new mapboxgl.Map({
-    container: 'map',
-    style: 'mapbox://styles/aaroninbrooklyn/cm8ynjmie006x01s43bs01wo2',
-    center: [-73.97, 40.68],
-    zoom: 11
-  });
+  <!-- Mapbox core JS -->
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
 
-  map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+  <!-- Mapbox Geocoder plugin CSS -->
+  <link
+    rel="stylesheet"
+    href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css"
+    type="text/css"
+  />
 
-  map.on('load', () => {
-    const geocoder = new MapboxGeocoder({
-      accessToken: mapboxgl.accessToken,
-      mapboxgl: mapboxgl
-    });
-    map.addControl(geocoder, 'top-left');
+  <!-- Mapbox Geocoder plugin JS -->
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
 
-    // Grab all layers
-    const allLayers = map.getStyle().layers;
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
 
-    // Track source-layer matches
-    const layerMap = {
-      'bpldeliverstogether-28xcka': [],
-      'Public_Restrooms_20250405-5turqf': [],
-      'Bicycle_Parking_20250401-cn1akk': []
-    };
+    .controls, .legend {
+      position: absolute;
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: sans-serif;
+      font-size: 14px;
+      z-index: 1;
+    }
 
-    allLayers.forEach(layer => {
-      const src = map.getLayer(layer.id)?.source;
-      if (layerMap[src]) {
-        layerMap[src].push(layer.id);
-      }
-    });
+    .controls { top: 10px; left: 10px; }
+    .legend { bottom: 10px; left: 10px; }
 
-    // Checkbox handler
-    document.querySelectorAll('.controls input[type="checkbox"]').forEach(cb => {
-      cb.addEventListener('change', (e) => {
-        const source = e.target.dataset.layer;
-        const visible = e.target.checked ? 'visible' : 'none';
-        if (layerMap[source]) {
-          layerMap[source].forEach(layerID => {
-            try {
-              if (map.getLayer(layerID) && map.getLayoutProperty(layerID, 'visibility') !== undefined) {
-                map.setLayoutProperty(layerID, 'visibility', visible);
-              } else {
-                map.setPaintProperty(layerID, 'circle-opacity', visible === 'visible' ? 1 : 0);
-              }
-            } catch (err) {
-              console.warn(`Couldn't toggle layer ${layerID}`, err);
-            }
-          });
-        }
-      });
-    });
+    .legend span { display: block; margin-bottom: 5px; }
+    .legend-box {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
 
-    // Popups on click
-    map.on('click', (e) => {
-      const features = map.queryRenderedFeatures(e.point, {
-        layers: Object.values(layerMap).flat()
-      });
-
-      if (!features.length) return;
-
-      const props = features[0].properties;
-      const html = Object.entries(props).map(([k, v]) => `<strong>${k}</strong>: ${v}`).join('<br>');
-
-      new mapboxgl.Popup()
-        .setLngLat(e.lngLat)
-        .setHTML(html)
-        .addTo(map);
-    });
-
-    // Tooltip on hover
-    const tooltip = new mapboxgl.Popup({ closeButton: false, closeOnClick: false });
-    map.on('mousemove', (e) => {
-      const features = map.queryRenderedFeatures(e.point, {
-        layers: Object.values(layerMap).flat()
-      });
-
-      if (features.length) {
-        map.getCanvas().style.cursor = 'pointer';
-        tooltip.setLngLat(e.lngLat)
-          .setHTML(`<strong>${features[0].layer.id}</strong>`)
-          .addTo(map);
-      } else {
-        map.getCanvas().style.cursor = '';
-        tooltip.remove();
-      }
-    });
-  });
-</script>
+    .bike { background: #70b8ff; }
+    .restroom { background: #ff3b7c; }
+    .dt { background: #ff9900; }
+  </style>
+</head>
