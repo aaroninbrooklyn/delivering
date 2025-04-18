@@ -1,13 +1,12 @@
+<!DOCTYPE html>
+<html>
 <head>
   <meta charset="utf-8" />
   <title>BPL Delivering Together Map</title>
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-  
+
   <!-- Mapbox core CSS -->
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css" rel="stylesheet" />
-
-  <!-- Mapbox core JS -->
-  <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
 
   <!-- Mapbox Geocoder plugin CSS -->
   <link
@@ -15,9 +14,6 @@
     href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css"
     type="text/css"
   />
-
-  <!-- Mapbox Geocoder plugin JS -->
-  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
 
   <style>
     body { margin: 0; padding: 0; }
@@ -50,3 +46,66 @@
     .dt { background: #ff9900; }
   </style>
 </head>
+<body>
+  <div id="map"></div>
+
+  <!-- Optional: Layer controls and legend -->
+  <div class="controls">
+    <strong>Layers</strong><br>
+    <label><input type="checkbox" data-layer="Bicycle_Parking_20250401-cn1akk" checked /> Bike Parking</label><br>
+    <label><input type="checkbox" data-layer="Public_Restrooms_20250405-5turqf" checked /> Public Restrooms</label><br>
+    <label><input type="checkbox" data-layer="bpldeliverstogether-28xcka" checked /> Delivering Together</label>
+  </div>
+
+  <div class="legend">
+    <strong>Legend</strong>
+    <span><span class="legend-box bike"></span>Bike Parking</span>
+    <span><span class="legend-box restroom"></span>Public Restrooms</span>
+    <span><span class="legend-box dt"></span>Delivering Together Site</span>
+  </div>
+
+  <!-- Mapbox core JS -->
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
+
+  <!-- Mapbox Geocoder plugin JS -->
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
+
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYWFyb25pbmJyb29rbHluIiwiYSI6ImNtOGowMmZ0dzBjMDgycnB4eWdhZW9nZ2sifQ.Z70awiKsIraT8Mfh-T_iAg';
+
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/aaroninbrooklyn/cm8ynjmie006x01s43bs01wo2',
+      center: [-73.97, 40.68],
+      zoom: 11
+    });
+
+    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    map.on('load', () => {
+      const geocoder = new MapboxGeocoder({
+        accessToken: mapboxgl.accessToken,
+        mapboxgl: mapboxgl
+      });
+      map.addControl(geocoder, 'top-left');
+
+      // Layer toggle setup (basic version — we’ll upgrade this later)
+      const layers = [
+        'Bicycle_Parking_20250401-cn1akk',
+        'Public_Restrooms_20250405-5turqf',
+        'bpldeliverstogether-28xcka'
+      ];
+
+      document.querySelectorAll('.controls input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', e => {
+          const layerID = e.target.dataset.layer;
+          const visibility = e.target.checked ? 'visible' : 'none';
+          if (map.getLayer(layerID)) {
+            map.setLayoutProperty(layerID, 'visibility', visibility);
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
