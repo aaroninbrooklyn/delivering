@@ -9,7 +9,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
 
-  <!-- Geocoder plugin with GitHub-safe CDN -->
+  <!-- Geocoder plugin -->
   <link href="https://api.tiles.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
   <script src="https://api.tiles.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
 
@@ -80,7 +80,7 @@
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
     map.on('load', () => {
-      // ✅ Geocoder safely added
+      // Geocoder (safely loaded)
       if (typeof MapboxGeocoder !== 'undefined') {
         const geocoder = new MapboxGeocoder({
           accessToken: mapboxgl.accessToken,
@@ -93,7 +93,7 @@
         console.warn("Geocoder plugin not loaded.");
       }
 
-      // ✅ Toggle layer visibility
+      // Layer toggles
       const layers = [
         'bike-parking',
         'public-restrooms',
@@ -110,7 +110,7 @@
         });
       });
 
-      // ✅ Hover tooltip
+      // Shared hover popup
       const tooltip = new mapboxgl.Popup({
         closeButton: false,
         closeOnClick: false
@@ -118,33 +118,49 @@
 
       map.on('mousemove', (e) => {
         const features = map.queryRenderedFeatures(e.point, {
-          layers: ['bpldeliverstrogether-28xcka']
+          layers: [
+            'bpldeliverstrogether-28xcka',
+            'public-restrooms',
+            'bike-parking'
+          ]
         });
 
         if (features.length > 0) {
-          const f = features[0].properties;
-          const hours = `
-            <strong>Hours:</strong><br>
-            Mon: ${f.Monday}<br>
-            Tue: ${f.Tuesday}<br>
-            Wed: ${f.Wednesday}<br>
-            Thu: ${f.Thursday}<br>
-            Fri: ${f.Friday}<br>
-            Sat: ${f.Saturday}<br>
-            Sun: ${f.Sunday}
-          `;
-          const content = `
-            <div class="popup">
-              <strong>${f.branch}</strong><br>
-              ${f.address}<br>
-              ${f.phone}<br>
-              <em>${f["Delivering Together"] || "Not in Delivering Together"}</em><br><br>
-              ${hours}
-            </div>
-          `;
+          const f = features[0];
+          const p = f.properties;
+          let html = '';
+
+          if (f.layer.id === 'bpldeliverstrogether-28xcka') {
+            html = `
+              <strong>${p.branch}</strong><br>
+              ${p.address}<br>
+              ${p.phone}<br>
+              <em>${p["Delivering Together"] || "Not in Delivering Together"}</em><br><br>
+              <strong>Hours:</strong><br>
+              Mon: ${p.Monday}<br>
+              Tue: ${p.Tuesday}<br>
+              Wed: ${p.Wednesday}<br>
+              Thu: ${p.Thursday}<br>
+              Fri: ${p.Friday}<br>
+              Sat: ${p.Saturday}<br>
+              Sun: ${p.Sunday}
+            `;
+          } else if (f.layer.id === 'public-restrooms') {
+            html = `
+              <strong>${p.facility_name}</strong><br>
+              Open: ${p.open}
+            `;
+          } else if (f.layer.id === 'bike-parking') {
+            html = `
+              <strong>Bike Rack</strong><br>
+              ${p.IFOAddress}<br>
+              Type: ${p.RackType}<br>
+              Program: ${p.Program}
+            `;
+          }
 
           map.getCanvas().style.cursor = 'pointer';
-          tooltip.setLngLat(e.lngLat).setHTML(content).addTo(map);
+          tooltip.setLngLat(e.lngLat).setHTML(`<div class="popup">${html}</div>`).addTo(map);
         } else {
           map.getCanvas().style.cursor = '';
           tooltip.remove();
