@@ -49,7 +49,6 @@
 <body>
   <div id="map"></div>
 
-  <!-- Optional: Layer controls and legend -->
   <div class="controls">
     <strong>Layers</strong><br>
     <label><input type="checkbox" data-layer="Bicycle_Parking_20250401-cn1akk" checked /> Bike Parking</label><br>
@@ -64,10 +63,8 @@
     <span><span class="legend-box dt"></span>Delivering Together Site</span>
   </div>
 
-  <!-- Mapbox core JS -->
+  <!-- SCRIPTS GO LAST to ensure full load -->
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
-
-  <!-- Mapbox Geocoder plugin JS -->
   <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
 
   <script>
@@ -89,7 +86,6 @@
       });
       map.addControl(geocoder, 'top-left');
 
-      // Layer toggle setup (basic version — we’ll upgrade this later)
       const layers = [
         'Bicycle_Parking_20250401-cn1akk',
         'Public_Restrooms_20250405-5turqf',
