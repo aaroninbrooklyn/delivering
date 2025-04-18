@@ -1,60 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8">
   <title>BPL Delivering Together Map</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- 1. Mapbox GL JS core -->
+  <!-- 1) Mapbox GL CSS & JS -->
   <link
     href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css"
-    rel="stylesheet"
-  />
+    rel="stylesheet">
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
 
-  <!-- 2. Mapbox Geocoder plugin (after Mapbox GL) -->
+  <!-- 2) Mapbox Geocoder CSS & JS (must come AFTER mapbox-gl) -->
   <link
-    href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css"
-    rel="stylesheet"
-  />
-  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
+    href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.css"
+    rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.min.js"></script>
 
   <style>
-    html, body { margin:0; padding:0; height:100%; font-family:sans-serif; }
-    #map { position:fixed; top:0; bottom:0; width:100%; z-index:0; }
-
-    /* Instructions GIF */
+    html, body { margin:0; padding:0; height:100%; }
+    #map { position:fixed; top:0; bottom:0; width:100%; }
     #instructions {
-      position:absolute; top:10px; right:10px;
-      width:220px; max-width:90vw; z-index:10;
+      position:absolute; top:10px; right:10px; width:220px; max-width:90vw; z-index:10;
     }
     #instructions img { width:100%; border-radius:6px; }
-
-    /* Locate button */
     #locate-btn {
-      position:absolute; top:10px; left:10px;
+      position:absolute; top:10px; left:10px; z-index:10;
       padding:12px; background:#ffeb3b; border:2px solid #000;
-      border-radius:5px; font-size:16px; font-weight:bold;
-      cursor:pointer; z-index:10; box-shadow:2px 2px 4px rgba(0,0,0,0.3);
-      max-width:90vw;
+      border-radius:5px; font-size:16px; font-weight:bold; cursor:pointer;
+      box-shadow:2px 2px 4px rgba(0,0,0,0.3); max-width:90vw;
     }
-
-    /* Legend */
     .legend {
-      position:absolute; bottom:10px; left:10px;
-      background:#ffeb3b; color:#000;
-      padding:10px; border:2px solid #000; border-radius:5px;
-      font-size:14px; box-shadow:2px 2px 4px rgba(0,0,0,0.2);
-      z-index:10; max-width:90vw;
+      position:absolute; bottom:10px; left:10px; z-index:10;
+      background:#ffeb3b; padding:10px; border:2px solid #000;
+      border-radius:5px; font-size:14px; color:#000;
+      box-shadow:2px 2px 4px rgba(0,0,0,0.2); max-width:90vw;
     }
-    .legend-row {
-      display:flex; align-items:center; margin-bottom:6px;
-    }
-    .legend-row img {
-      height:22px; margin-right:8px;
-    }
-
-    @media (max-width:600px) {
+    .legend-row { display:flex; align-items:center; margin-bottom:6px; }
+    .legend-row img { height:22px; margin-right:8px; }
+    @media(max-width:600px){
       #instructions { bottom:100px; top:auto; width:90vw; }
       .legend { font-size:13px; padding:8px; }
       .legend-row img { height:20px; }
@@ -64,15 +48,15 @@
 </head>
 <body>
 
-  <!-- Map Container -->
+  <!-- Map -->
   <div id="map"></div>
 
   <!-- Instructions GIF -->
   <div id="instructions">
-    <img src="https://raw.githubusercontent.com/aaroninbrooklyn/delivering/main/dtlanguage.gif" alt="Instructions" />
+    <img src="https://raw.githubusercontent.com/aaroninbrooklyn/delivering/main/dtlanguage.gif" alt="Instructions">
   </div>
 
-  <!-- Locate Button -->
+  <!-- Where Am I Button -->
   <div id="locate-btn">📍 Where am I?</div>
 
   <!-- Legend -->
@@ -90,111 +74,95 @@
   </div>
 
   <script>
-    // 1) Initialize the map
+    // Initialize map
     mapboxgl.accessToken = 'pk.eyJ1IjoiYWFyb25pbmJyb29rbHluIiwiYSI6ImNtOGowMmZ0dzBjMDgycnB4eWdhZW9nZ2sifQ.Z70awiKsIraT8Mfh-T_iAg';
     const map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/aaroninbrooklyn/cm8ynjmie006x01s43bs01wo2',
-      center: [-73.97,40.68],
+      center: [-73.97, 40.68],
       zoom: 11
     });
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    // 2) Add the geocoder control
-    const geocoder = new MapboxGeocoder({
+    // Add Geocoder control
+    map.addControl(new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
       mapboxgl: mapboxgl,
       marker: false,
-      placeholder: "Search for address"
-    });
-    map.addControl(geocoder, 'top-left');
+      placeholder: 'Search for address'
+    }), 'top-left');
 
-    // 3) Load custom SVG icons dynamically
+    // Dynamically load custom SVGs
     const icons = {
-      'bike-parking':   'https://aaroninbrooklyn.github.io/delivering/bike-parking.svg',
-      'toilet-map':     'https://aaroninbrooklyn.github.io/delivering/toilet-map.svg',
+      'bike-parking': 'https://aaroninbrooklyn.github.io/delivering/bike-parking.svg',
+      'toilet-map':   'https://aaroninbrooklyn.github.io/delivering/toilet-map.svg',
       'delivering-together': 'https://aaroninbrooklyn.github.io/delivering/delivering-together.svg'
     };
-    function loadIcons(done) {
-      const keys = Object.keys(icons);
-      let count = 0;
-      keys.forEach(k => {
-        map.loadImage(icons[k], (err, img) => {
-          if (!err && img && !map.hasImage(k)) {
-            map.addImage(k, img);
-          }
-          if (++count === keys.length) done();
-        });
-      });
+    function loadIcons(cb){
+      let loaded=0, keys=Object.keys(icons);
+      keys.forEach(k=>map.loadImage(icons[k],(e,i)=>{
+        if(!e&&i&&!map.hasImage(k)) map.addImage(k,i);
+        if(++loaded===keys.length) cb();
+      }));
     }
 
-    // 4) Override each layer's icon-image AFTER icons have loaded
-    function overrideIcons() {
-      map.setLayoutProperty('bike-parking',    'icon-image', 'bike-parking');
-      map.setLayoutProperty('public-restrooms', 'icon-image', 'toilet-map');
-      map.setLayoutProperty('bpldeliverstrogether-28xcka',
-        'icon-image',
-        [
-          "match",
-          ["get", "Delivering Together"],
-          "Delivering Together", "delivering-together",
-          "BPL Branch",           "bklyn-logo",
-          /* fallback */         "star"
-        ]
-      );
+    // Override sprite-based icon-image with our loaded icons
+    function overrideIconImages(){
+      map.setLayoutProperty('bike-parking','icon-image','bike-parking');
+      map.setLayoutProperty('public-restrooms','icon-image','toilet-map');
+      map.setLayoutProperty('bpldeliverstrogether-28xcka','icon-image',[
+        'match',['get','Delivering Together'],
+        'Delivering Together','delivering-together',
+        'BPL Branch','bklyn-logo',
+        'star'
+      ]);
     }
 
-    // 5) Enable hover popups
+    // Hover popups
     const popup = new mapboxgl.Popup({ closeButton:false, closeOnClick:false });
-    function enableHover() {
-      map.on('mousemove', e => {
-        const features = map.queryRenderedFeatures(e.point, {
-          layers: ['bike-parking','public-restrooms','bpldeliverstrogether-28xcka']
+    function enableHover(){
+      map.on('mousemove', e=>{
+        const ft=map.queryRenderedFeatures(e.point,{
+          layers:['bike-parking','public-restrooms','bpldeliverstrogether-28xcka']
         });
-        if (features.length) {
-          const f = features[0], p = f.properties;
-          let html = '';
-          if (f.layer.id === 'bpldeliverstrogether-28xcka') {
-            html = `<strong>${p.branch}</strong><br>${p.address}<br>${p.phone}<br><em>${p["Delivering Together"]}</em>
-              <br><strong>Hours:</strong><br>
-              Mon: ${p.Monday}<br>Tue: ${p.Tuesday}<br>Wed: ${p.Wednesday}<br>
-              Thu: ${p.Thursday}<br>Fri: ${p.Friday}<br>Sat: ${p.Saturday}<br>Sun: ${p.Sunday}`;
-          } else if (f.layer.id === 'public-restrooms') {
-            html = `<strong>Public Restroom</strong><br>${p.facility_name}<br>Open: ${p.open}`;
+        if(ft.length){
+          let p=ft[0].properties, html='';
+          if(ft[0].layer.id==='bpldeliverstrogether-28xcka'){
+            html=`<strong>${p.branch}</strong><br>${p.address}<br>${p.phone}
+                  <br><em>${p["Delivering Together"]}</em><br><strong>Hours:</strong><br>
+                  Mon: ${p.Monday}<br>Tue: ${p.Tuesday}<br>Wed: ${p.Wednesday}
+                  <br>Thu: ${p.Thursday}<br>Fri: ${p.Friday}<br>Sat: ${p.Saturday}
+                  <br>Sun: ${p.Sunday}`;
+          } else if(ft[0].layer.id==='public-restrooms'){
+            html=`<strong>Public Restroom</strong><br>${p.facility_name}<br>Open: ${p.open}`;
           } else {
-            html = `<strong>Bike Rack</strong><br>${p.IFOAddress}<br>Type: ${p.RackType}<br>Program: ${p.Program}`;
+            html=`<strong>Bike Rack</strong><br>${p.IFOAddress}<br>Type: ${p.RackType}<br>Program: ${p.Program}`;
           }
           popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
-          map.getCanvas().style.cursor = 'pointer';
+          map.getCanvas().style.cursor='pointer';
         } else {
           popup.remove();
-          map.getCanvas().style.cursor = '';
+          map.getCanvas().style.cursor='';
         }
       });
     }
 
-    // 6) Locate user on click & on load
+    // Geolocate user
     let userMarker;
-    function locateUser() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          pos => {
-            const coords = [pos.coords.longitude, pos.coords.latitude];
-            map.flyTo({ center: coords, zoom: 14 });
-            userMarker && userMarker.remove();
-            userMarker = new mapboxgl.Marker({ color: 'blue' })
-              .setLngLat(coords).addTo(map);
-          },
-          () => alert('Location access denied')
-        );
-      }
+    function locateUser(){
+      navigator.geolocation?.getCurrentPosition(pos=>{
+        const c=[pos.coords.longitude,pos.coords.latitude];
+        map.flyTo({center:c,zoom:14});
+        userMarker?.remove();
+        userMarker=new mapboxgl.Marker({color:'blue'}).setLngLat(c).addTo(map);
+      },()=>alert('Location denied'));
     }
-    document.getElementById('locate-btn').onclick = locateUser;
+    document.getElementById('locate-btn').onclick=locateUser;
 
-    // 7) On map load
-    map.on('load', () => {
-      loadIcons(() => {
-        overrideIcons();
+    // On load
+    map.on('load',()=>{
+      loadIcons(()=>{
+        overrideIconImages();
         enableHover();
       });
       locateUser();
