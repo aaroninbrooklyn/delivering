@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,8 +25,11 @@
     #map {
       position: fixed;
       top: 0;
+      left: 0;
+      right: 0;
       bottom: 0;
       width: 100%;
+      height: 100%;
       z-index: 0;
     }
     #instructions {
@@ -33,12 +37,12 @@
       top: 10px;
       right: 10px;
       width: 220px;
+      max-width: 90vw;
       z-index: 10;
     }
     #instructions img {
       width: 100%;
       border-radius: 6px;
-      max-width: 90vw;
     }
     #ui-container {
       position: absolute;
@@ -83,19 +87,6 @@
       height: 22px;
       margin-right: 8px;
     }
-    .user-location-dot {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #2196f3;
-      box-shadow: 0 0 10px 3px rgba(33, 150, 243, 0.8);
-      animation: pulse 1s infinite;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.4); opacity: 0.5; }
-      100% { transform: scale(1); opacity: 1; }
-    }
   </style>
 </head>
 <body>
@@ -119,5 +110,38 @@
     <img src="https://aaroninbrooklyn.github.io/delivering/delivering-together.svg" alt="DT Branch"> Delivering Together Branch
   </div>
 </div>
+
+<script>
+  mapboxgl.accessToken = 'pk.eyJ1IjoiYWFyb25pbmJyb29rbHluIiwiYSI6ImNtOGowMmZ0dzBjMDgycnB4eWdhZW9nZ2sifQ.Z70awiKsIraT8Mfh-T_iAg';
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/aaroninbrooklyn/cm8ynjmie006x01s43bs01wo2',
+    center: [-73.97, 40.68],
+    zoom: 11
+  });
+
+  map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+  const geocoder = new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken,
+    mapboxgl: mapboxgl
+  });
+  document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
+
+  function locateUser() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(position => {
+        const userCoords = [position.coords.longitude, position.coords.latitude];
+        map.flyTo({ center: userCoords, zoom: 14 });
+        new mapboxgl.Marker({ color: 'blue' }).setLngLat(userCoords).addTo(map);
+      });
+    }
+  }
+
+  document.getElementById('locate-btn').addEventListener('click', locateUser);
+
+  // Auto-locate on load
+  window.onload = locateUser;
+</script>
 </body>
 </html>
