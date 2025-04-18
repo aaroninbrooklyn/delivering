@@ -5,7 +5,7 @@
   <title>BPL Delivering Together Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Mapbox GL JS -->
+  <!-- Mapbox GL -->
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
 
@@ -62,7 +62,7 @@
   <div class="legend">
     <strong>Legend</strong>
     <span><span class="legend-box dt"></span>Delivering Together Branch (🚀)</span>
-    <span><span class="legend-box"></span>Other BPL Branch (⭐)</span>
+    <span><span class="legend-box"></span>Other BPL Branch (⭐ or 🏛️)</span>
     <span><span class="legend-box restroom"></span>Public Restrooms (◆)</span>
     <span><span class="legend-box bike"></span>Bike Parking (🅿️)</span>
   </div>
@@ -80,7 +80,7 @@
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
     map.on('load', () => {
-      // Geocoder (safely loaded)
+      // Geocoder
       if (typeof MapboxGeocoder !== 'undefined') {
         const geocoder = new MapboxGeocoder({
           accessToken: mapboxgl.accessToken,
@@ -110,7 +110,7 @@
         });
       });
 
-      // Shared hover popup
+      // Tooltip on hover
       const tooltip = new mapboxgl.Popup({
         closeButton: false,
         closeOnClick: false
@@ -129,13 +129,16 @@
           const f = features[0];
           const p = f.properties;
           let html = '';
+          const layer = f.layer.id;
 
-          if (f.layer.id === 'bpldeliverstrogether-28xcka') {
+          if (layer === 'bpldeliverstrogether-28xcka') {
+            const status = p["Delivering Together"];
+            console.log("Delivering Together value:", status);
             html = `
               <strong>${p.branch}</strong><br>
               ${p.address}<br>
               ${p.phone}<br>
-              <em>${p["Delivering Together"] || "Not in Delivering Together"}</em><br><br>
+              <em>${status || "No status set"}</em><br><br>
               <strong>Hours:</strong><br>
               Mon: ${p.Monday}<br>
               Tue: ${p.Tuesday}<br>
@@ -145,12 +148,12 @@
               Sat: ${p.Saturday}<br>
               Sun: ${p.Sunday}
             `;
-          } else if (f.layer.id === 'public-restrooms') {
+          } else if (layer === 'public-restrooms') {
             html = `
               <strong>${p.facility_name}</strong><br>
               Open: ${p.open}
             `;
-          } else if (f.layer.id === 'bike-parking') {
+          } else if (layer === 'bike-parking') {
             html = `
               <strong>Bike Rack</strong><br>
               ${p.IFOAddress}<br>
