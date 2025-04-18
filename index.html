@@ -47,22 +47,53 @@
       font-size: 13px;
       line-height: 1.4;
     }
+
+    #instructions {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1;
+      width: 250px;
+    }
+
+    #locate-btn {
+      position: absolute;
+      bottom: 80px;
+      right: 10px;
+      padding: 8px 12px;
+      background: white;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      z-index: 1;
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
 
+  <!-- 📸 Instructions GIF -->
+  <div id="instructions">
+    <img src="https://i.imgur.com/HblNw6K.gif" alt="Instructions" style="width:100%;border-radius:8px;" />
+  </div>
+
+  <!-- 📍 Manual locate button -->
+  <button id="locate-btn">📍 Where am I?</button>
+
+  <!-- ✅ Layer controls -->
   <div class="controls">
     <strong>Layers</strong><br>
     <label><input type="checkbox" data-layer="bike-parking" checked /> Bike Parking</label><br>
     <label><input type="checkbox" data-layer="public-restrooms" checked /> Public Restrooms</label><br>
-    <label><input type="checkbox" data-layer="bpldeliverstrogether-28xcka" checked /> Delivering Together / BPL Branches</label>
+    <label><input type="checkbox" data-layer="bpldeliverstrogether-28xcka" checked /> Delivering Together</label>
   </div>
 
+  <!-- ✅ Legend -->
   <div class="legend">
     <strong>Legend</strong>
     <span><span class="legend-box dt"></span>Delivering Together Branch (🚀)</span>
-    <span><span class="legend-box"></span>Other BPL Branch (⭐ or 🏛️)</span>
+    <span><span class="legend-box"></span>Other BPL Branch (⭐)</span>
     <span><span class="legend-box restroom"></span>Public Restrooms (◆)</span>
     <span><span class="legend-box bike"></span>Bike Parking (🅿️)</span>
   </div>
@@ -79,96 +110,76 @@
 
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    map.on('load', () => {
-      // Geocoder
-      if (typeof MapboxGeocoder !== 'undefined') {
-        const geocoder = new MapboxGeocoder({
-          accessToken: mapboxgl.accessToken,
-          mapboxgl: mapboxgl,
-          marker: false,
-          placeholder: "Search an address"
-        });
-        map.addControl(geocoder, 'top-left');
-      } else {
-        console.warn("Geocoder plugin not loaded.");
-      }
-
-      // Layer toggles
-      const layers = [
-        'bike-parking',
-        'public-restrooms',
-        'bpldeliverstrogether-28xcka'
-      ];
-
-      document.querySelectorAll('.controls input[type="checkbox"]').forEach(cb => {
-        cb.addEventListener('change', e => {
-          const layerID = e.target.dataset.layer;
-          const visibility = e.target.checked ? 'visible' : 'none';
-          if (map.getLayer(layerID)) {
-            map.setLayoutProperty(layerID, 'visibility', visibility);
-          }
-        });
+    // 🔍 Geocoder search bar
+    if (typeof MapboxGeocoder !== 'undefined') {
+      const geocoder = new MapboxGeocoder({
+        accessToken: mapboxgl.accessToken,
+        mapboxgl: mapboxgl,
+        marker: false,
+        placeholder: "Search for your address"
       });
+      map.addControl(geocoder, 'top-left');
+    }
 
-      // Tooltip on hover
-      const tooltip = new mapboxgl.Popup({
-        closeButton: false,
-        closeOnClick: false
-      });
-
-      map.on('mousemove', (e) => {
-        const features = map.queryRenderedFeatures(e.point, {
-          layers: [
-            'bpldeliverstrogether-28xcka',
-            'public-restrooms',
-            'bike-parking'
-          ]
-        });
-
-        if (features.length > 0) {
-          const f = features[0];
-          const p = f.properties;
-          let html = '';
-          const layer = f.layer.id;
-
-          if (layer === 'bpldeliverstrogether-28xcka') {
-            const status = p["Delivering Together"];
-            console.log("Delivering Together value:", status);
-            html = `
-              <strong>${p.branch}</strong><br>
-              ${p.address}<br>
-              ${p.phone}<br>
-              <em>${status || "No status set"}</em><br><br>
-              <strong>Hours:</strong><br>
-              Mon: ${p.Monday}<br>
-              Tue: ${p.Tuesday}<br>
-              Wed: ${p.Wednesday}<br>
-              Thu: ${p.Thursday}<br>
-              Fri: ${p.Friday}<br>
-              Sat: ${p.Saturday}<br>
-              Sun: ${p.Sunday}
-            `;
-          } else if (layer === 'public-restrooms') {
-            html = `
-              <strong>${p.facility_name}</strong><br>
-              Open: ${p.open}
-            `;
-          } else if (layer === 'bike-parking') {
-            html = `
-              <strong>Bike Rack</strong><br>
-              ${p.IFOAddress}<br>
-              Type: ${p.RackType}<br>
-              Program: ${p.Program}
-            `;
-          }
-
-          map.getCanvas().style.cursor = 'pointer';
-          tooltip.setLngLat(e.lngLat).setHTML(`<div class="popup">${html}</div>`).addTo(map);
-        } else {
-          map.getCanvas().style.cursor = '';
-          tooltip.remove();
+    // ✅ Layer toggles
+    const layers = ['bike-parking', 'public-restrooms', 'bpldeliverstrogether-28xcka'];
+    document.querySelectorAll('.controls input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', e => {
+        const layerID = e.target.dataset.layer;
+        const visibility = e.target.checked ? 'visible' : 'none';
+        if (map.getLayer(layerID)) {
+          map.setLayoutProperty(layerID, 'visibility', visibility);
         }
       });
+    });
+
+    // 🧠 Hover tooltip
+    const tooltip = new mapboxgl.Popup({ closeButton: false, closeOnClick: false });
+    map.on('mousemove', (e) => {
+      const features = map.queryRenderedFeatures(e.point, { layers });
+      if (features.length > 0) {
+        const f = features[0], p = f.properties;
+        let html = '';
+        if (f.layer.id === 'bpldeliverstrogether-28xcka') {
+          html = `<strong>${p.branch}</strong><br>${p.address}<br>${p.phone}<br><em>${p["Delivering Together"]}</em><br><br>
+            <strong>Hours:</strong><br>
+            Mon: ${p.Monday}<br>Tue: ${p.Tuesday}<br>Wed: ${p.Wednesday}<br>
+            Thu: ${p.Thursday}<br>Fri: ${p.Friday}<br>Sat: ${p.Saturday}<br>Sun: ${p.Sunday}`;
+        } else if (f.layer.id === 'public-restrooms') {
+          html = `<strong>${p.facility_name}</strong><br>Open: ${p.open}`;
+        } else if (f.layer.id === 'bike-parking') {
+          html = `<strong>Bike Rack</strong><br>${p.IFOAddress}<br>Type: ${p.RackType}<br>Program: ${p.Program}`;
+        }
+        map.getCanvas().style.cursor = 'pointer';
+        tooltip.setLngLat(e.lngLat).setHTML(`<div class="popup">${html}</div>`).addTo(map);
+      } else {
+        map.getCanvas().style.cursor = '';
+        tooltip.remove();
+      }
+    });
+
+    // 🗺 Auto-zoom to user's location on load
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        map.flyTo({
+          center: [pos.coords.longitude, pos.coords.latitude],
+          zoom: 14
+        });
+      }, () => console.warn("Location permission denied."));
+    }
+
+    // 📍 Manual "Where am I?" button
+    document.getElementById('locate-btn').addEventListener('click', () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          map.flyTo({
+            center: [pos.coords.longitude, pos.coords.latitude],
+            zoom: 14
+          });
+        }, () => alert("Could not access your location."));
+      } else {
+        alert("Geolocation is not supported by your browser.");
+      }
     });
   </script>
 </body>
