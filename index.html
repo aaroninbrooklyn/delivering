@@ -4,10 +4,11 @@
   <meta charset="utf-8" />
   <title>BPL Delivering Together Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
-  <link href="https://api.tiles.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
-  <script src="https://api.tiles.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
 
   <style>
     body { margin: 0; padding: 0; }
@@ -125,7 +126,7 @@
 <body>
   <div id="map"></div>
 
-  <!-- 🖼️ Multilingual instructions GIF -->
+  <!-- 🖼️ Instructions -->
   <div id="instructions">
     <img src="https://raw.githubusercontent.com/aaroninbrooklyn/delivering/main/dtlanguage.gif" alt="Instructions" style="width:100%;border-radius:8px;" />
   </div>
@@ -162,7 +163,6 @@
 
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    // Geocoder
     const geocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
       mapboxgl: mapboxgl,
@@ -171,7 +171,6 @@
     });
     document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
 
-    // Hover tooltip
     const tooltip = new mapboxgl.Popup({ closeButton: false, closeOnClick: false });
     map.on('mousemove', (e) => {
       const features = map.queryRenderedFeatures(e.point, {
@@ -198,7 +197,6 @@
       }
     });
 
-    // Flashing dot + auto and manual location
     let userMarker = null;
     function showUserLocation(pos) {
       const coords = [pos.coords.longitude, pos.coords.latitude];
@@ -212,15 +210,15 @@
     function locateUser() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(showUserLocation, () => {
-          alert("We couldn’t access your location.");
+          alert("Could not access your location.");
         });
       } else {
-        alert("Geolocation is not supported by your browser.");
+        alert("Geolocation not supported by your browser.");
       }
     }
 
     document.getElementById('locate-btn').addEventListener('click', locateUser);
-    window.onload = locateUser; // 🔥 Auto locate on load
+    window.onload = locateUser;
   </script>
 </body>
 </html>
