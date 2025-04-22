@@ -5,16 +5,14 @@
   <title>BPL Delivering Together Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- 1) Mapbox GL JS core -->
-  <link 
-    href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css" 
+  <link
+    href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css"
     rel="stylesheet"
   />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
 
-  <!-- 2) Mapbox Geocoder (after mapbox-gl) -->
-  <link 
-    href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" 
+  <link
+    href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css"
     rel="stylesheet"
   />
   <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
@@ -27,8 +25,9 @@
     #instructions {
       position:absolute; top:10px; right:10px;
       width:220px; max-width:90vw; z-index:10;
+      border-radius:6px; overflow:hidden; /* Ensure GIF doesn't overflow */
     }
-    #instructions img {width:100%; border-radius:6px;}
+    #instructions img {display:block; width:100%;} /* Make image responsive within container */
 
     /* Locate button */
     #locate-btn {
@@ -36,7 +35,7 @@
       padding:12px; background:#ffeb3b; border:2px solid #000;
       border-radius:5px; font-size:16px; font-weight:bold;
       cursor:pointer; z-index:10; box-shadow:2px 2px 4px rgba(0,0,0,0.3);
-      max-width:90vw;
+      max-width:90vw; text-align:center; /* Center text on smaller screens */
     }
 
     /* Legend */
@@ -51,29 +50,52 @@
       display:flex; align-items:center; margin-bottom:6px;
     }
     .legend-row img {
-      height:22px; margin-right:8px;
+      height:22px; margin-right:8px; display:block; /* Prevent extra space below image */
     }
 
-    @media (max-width:600px) {
-      #instructions { bottom:100px; top:auto; width:90vw; }
-      .legend { font-size:13px; padding:8px; }
-      .legend-row img { height:20px; }
-      #locate-btn { font-size:14px; padding:10px; }
+    /* Media query for smaller screens */
+    @media (max-width: 600px) {
+      #instructions {
+        position: static; /* Flow with the document on small screens */
+        width: 100%;
+        margin: 10px auto; /* Center and add some margin */
+      }
+      .legend {
+        position: static; /* Flow with the document on small screens */
+        width: 95%;
+        margin: 10px auto; /* Center and add some margin */
+        font-size: 13px;
+        padding: 8px;
+      }
+      .legend-row img {
+        height: 20px;
+      }
+      #locate-btn {
+        position: absolute; /* Keep fixed position */
+        top: auto;
+        bottom: 10px; /* Move to the bottom */
+        left: 50%; /* Center horizontally */
+        transform: translateX(-50%); /* Adjust for centering */
+        width: 90%; /* Make it wider */
+        max-width: none; /* Override max-width */
+        font-size: 14px;
+        padding: 10px;
+      }
+      #map {
+        margin-bottom: 120px; /* Make space for the repositioned locate button and legend */
+      }
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
 
-  <!-- Instructions GIF -->
   <div id="instructions">
     <img src="https://raw.githubusercontent.com/aaroninbrooklyn/delivering/main/dtlanguage.gif" alt="Instructions" />
   </div>
 
-  <!-- Where am I -->
   <div id="locate-btn">📍 Where am I?</div>
 
-  <!-- Legend -->
   <div class="legend">
     <strong>Legend</strong>
     <div class="legend-row">
@@ -124,7 +146,7 @@
             const layers = [
               {id:'bike-parking',      icon:'bike-parking'},
               {id:'public-restrooms',   icon:'toilet-map'},
-              {id:'bpldeliverstrogether-28xcka', 
+              {id:'bpldeliverstrogether-28xcka',
                iconExp:[
                  'match',['get','Delivering Together'],
                  'Delivering Together','delivering-together',
